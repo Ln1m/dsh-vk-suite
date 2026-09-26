@@ -2,7 +2,7 @@
 
 [中文](README.md) · English
 
-![Three-column layout (dark)](assets/vk-suite-layout.png)
+![Three-column layout (dark)](assets/vk-suite-layout-en.png)
 ![Three-column layout (light)](assets/vk-suite-layout-light.png)
 
 *Mockups: layout rendered from the official theme tokens, not screenshots of a running instance.*
