@@ -1,5 +1,7 @@
 # dsh-vk-suite
 
+[English](README.en.md) · 中文
+
 ![三栏布局（暗色）界面示意](assets/vk-suite-layout.png)
 ![三栏布局（亮色）界面示意](assets/vk-suite-layout-light.png)
 
