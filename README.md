@@ -40,7 +40,6 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-cmdstrip
 ## 前提
 
 - 依赖官方 UI 包（`@deepseek-ai/dsh-client-ui-*`），由 DSH 运行时提供
-- 关掉官方 sidebar 布局插件后再用本套三栏
 
 ## 给别的插件留的位置
 
