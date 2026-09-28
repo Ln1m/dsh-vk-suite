@@ -1218,7 +1218,7 @@ window.__ModuleLoader__.load({
 				/** 被我们改过内联 bottom 的官方盒子 + 原值（拔出时**原样**还原，绝不留痕）。 */
 				let panelNudged = null;
 				const pxOf = () => {
-					if (vkCmdStore.open !== true || vkCmdStore.paneOpen !== true || vkCmdStore.paneFullscreen === true) return 0;
+					if (vkCmdStore.open !== true || vkCmdStore.paneOpen !== true) return 0;
 					return Math.max(VK_CMD_PX_MIN, Math.round((window.innerHeight * vkCmdStore.height) / 100));
 				};
 				const detach = () => {
@@ -1257,7 +1257,7 @@ window.__ModuleLoader__.load({
 					const out = { mode: splitMode === null ? "measuring" : splitMode, gap: null, panelH: null, hostTop: null, panelBottom: null, overlap: null, touchedOfficial: panelNudged !== null, scroller: null, at: Date.now() };
 					try {
 						const panel = document.querySelector("[data-sidebar-right-panel]");
-						if (panel === null || panel === undefined || vkCmdFullscreen() === true) { Object.assign(vkCmdSplitState, out); return out; }
+						if (panel === null || panel === undefined) { Object.assign(vkCmdSplitState, out); return out; }
 						const hr = host.getBoundingClientRect();
 						const pr = panel.getBoundingClientRect();
 						// 还没拿到真实布局（垫片/初始帧）：不judge，也不动任何东西
@@ -1346,31 +1346,35 @@ window.__ModuleLoader__.load({
 							col.style.position = "relative";
 						}
 					} catch { /* 取不到 computed 也不能拦着挂载 */ }
-					try {
-						host.style.position = "absolute";
-						host.style.left = "0";
-						host.style.right = "0";
-						host.style.bottom = "0";
-						host.style.width = "auto";
-						host.style.height = px + "px";
-						// z-index 必须**高于**官方面板的 10（.P3OORG_panel{z-index:10}）：两者同在那一格的
-						// 堆叠上下文里，低于它就会被压在官方面板下面（看得见格子、看不见下界）。
-						host.style.zIndex = "20";
-						host.style.pointerEvents = "auto";
+		const hostParent = wantFullscreen === true ? document.body : col;
+		try {
+			host.style.position = wantFullscreen === true ? "fixed" : "absolute";
+			host.style.left = "0";
+			host.style.right = "0";
+			host.style.bottom = "0";
+			host.style.width = "auto";
+			host.style.height = px + "px";
+			// z-index 必须**高于**官方面板：普通态面板 z-index:10（取 20），
+			// 全屏态面板 position:fixed + z-index:40（取 60）。
+			host.style.zIndex = wantFullscreen === true ? "60" : "20";
+			host.style.pointerEvents = "auto";
 					} catch { /* ignore */ }
-					if (host.parentElement !== col) {
-						try { col.appendChild(host); } catch (e) {
+					if (host.parentElement !== hostParent) {
+						try { hostParent.appendChild(host); } catch (e) {
 							vkCmdProbe({ err: "宿主插入失败：" + String(e && e.message ? e.message : e), inCol: false });
 							col = null;
 							return;
 						}
 					}
-					if (pinnedPx !== px) {
-						pinnedPx = px;
-						try {
-							col.style.paddingBottom = px + "px";
-						} catch { /* ignore */ }
-					}
+			if (wantFullscreen === true) {
+				pinnedPx = px;
+				try { if (col.style.paddingBottom !== "") col.style.paddingBottom = ""; } catch { /* ignore */ }
+			} else if (pinnedPx !== px) {
+				pinnedPx = px;
+				try {
+					col.style.paddingBottom = px + "px";
+				} catch { /* ignore */ }
+			}
 					// 「分割」实证：padding 先试，**每次实读**两个 rect 判它到底有没有把官方面板抬起来；
 					// 还重叠才动官方盒子的内联 bottom（见 splitCheck 上面那段实测）。
 					const split = splitCheck(px);
