@@ -10,8 +10,6 @@ window.__ModuleLoader__.load({
 		const react = require('react');
 		const contract = require('dsh-vk-contract');
 		const h = react.createElement;
-		const ReactDOM = (() => { try { return require("react-dom"); } catch { return null; } })();
-		const createPortal = ReactDOM === null || typeof ReactDOM.createPortal !== "function" ? null : ReactDOM.createPortal;
 
 		const VK = contract.VK;
 		const VK_PANES = contract.VK_PANES;
@@ -380,9 +378,10 @@ window.__ModuleLoader__.load({
 			}, h(VIcon, { name: "panelRight", size: rail || brand ? 16 : 15 }));
 		}
 		/* ── 品牌行落位 ───────────────────────────────────────────────
-		   官方左栏顶栏是「品牌按钮 + 折叠按钮」，没有插槽可投。这里从 vk 自己的区域宿主往上找品牌行，
-		   在它末尾挂一个盒子、把「拓展栏开关」portal 进去 —— 落点就在官方折叠按钮右侧。
-		   只加这一颗：官方那颗折叠按钮原样不动（不隐藏、不改），拿不到落点就退回标签条尾部。 */
+		   官方左栏顶栏是「品牌按钮 + 折叠按钮」，没有插槽可投。做法：从 vk 自己的区域宿主往上找品牌行，
+		   在它末尾挂一个盒子，放一颗**克隆官方那颗折叠按钮**的按钮 —— 类名与图标都直接取官方的
+		   （图标镜像成右栏图标），所以尺寸、描边、悬停状态与官方完全同源，不可能不一致。
+		   官方那颗原样不动；拿不到落点就退回标签条尾部。 */
 		const BRAND_SLOT_CLASS = "vk_brandSlot";
 		function findBrandRow(from) {
 			if (from === null || from === undefined || typeof from.parentElement === "undefined") return null;
@@ -396,16 +395,48 @@ window.__ModuleLoader__.load({
 			}
 			return null;
 		}
+		/** 品牌行里那颗官方折叠按钮：从末尾往前找第一颗带 aria-label 的（品牌按钮在最前，不会误取）。 */
+		function findOfficialToggle(row) {
+			for (let i = row.children.length - 1; i >= 0; i -= 1) {
+				const child = row.children[i];
+				if (child.hasAttribute("data-vk-brand-slot") === true) continue;
+				const btn = child.tagName === "BUTTON" ? child : child.querySelector("button");
+				return btn !== null && btn.getAttribute("aria-label") !== null ? btn : null;
+			}
+			return null;
+		}
 		function useBrandRowAnchor(enabled) {
 			const [box, setBox] = react.useState(null);
 			const anchor = typeof react.useLayoutEffect === "function" ? react.useLayoutEffect : react.useEffect;
 			anchor(() => {
 				setBox(null);
-				if (enabled !== true || typeof document === "undefined" || createPortal === null) return void 0;
+				if (enabled !== true || typeof document === "undefined") return void 0;
 				let alive = true;
 				let row = null;
 				let host = null;
+				let own = null;
+				let official = null;
 				let keep = null;
+				let lastIcon = null;
+				/** 与官方那颗共用类名与图标：尺寸、描边、悬停状态同源。 */
+				const syncStyle = () => {
+					if (own === null || official === null) return;
+					const want = official.className + " vk_brandOwn";
+					if (own.className !== want) own.className = want;
+					if (lastIcon !== official.innerHTML) {
+						lastIcon = official.innerHTML;
+						own.innerHTML = official.innerHTML;
+						const svg = own.querySelector("svg");
+						if (svg !== null) svg.style.transform = "scaleX(-1)";
+					}
+					let open = false;
+					try {
+						const sr = ctxRef.current.get("sidebarRight");
+						open = sr !== undefined && sr !== null && typeof sr.isExpanded === "function" && sr.isExpanded() === true;
+					} catch { open = false; }
+					const label = open ? "收起拓展栏（官方右侧栏）" : "打开拓展栏（官方右侧栏）";
+					if (own.title !== label) { own.title = label; own.setAttribute("aria-label", open ? "收起拓展栏" : "打开拓展栏"); }
+				};
 				const attach = () => {
 					if (!alive) return;
 					const next = findBrandRow(document.querySelector("[data-vk-area=\"sidebar\"]"));
@@ -414,26 +445,37 @@ window.__ModuleLoader__.load({
 						if (keep !== null) { try { keep.disconnect(); } catch { /* ignore */ } keep = null; }
 						if (host !== null) { try { host.remove(); } catch { /* ignore */ } }
 						row = next;
+						official = findOfficialToggle(row);
 						host = document.createElement("span");
 						host.className = BRAND_SLOT_CLASS;
 						host.setAttribute("data-vk-brand-slot", "1");
+						own = document.createElement("button");
+						own.type = "button";
+						own.setAttribute("data-vk-right-toggle", "brand");
+						own.addEventListener("click", () => {
+							try {
+								const sr = ctxRef.current.get("sidebarRight");
+								if (sr !== undefined && sr !== null && typeof sr.toggleExpanded === "function") sr.toggleExpanded();
+							} catch { /* 官方右栏服务没接上就什么也不做 */ }
+						});
+						host.appendChild(own);
 						row.appendChild(host);
 						if (typeof MutationObserver !== "undefined") {
-							// React 重排品牌行时会把它不认识的节点挤掉，发现被挤掉就挂回去。
 							keep = new MutationObserver(() => {
 								if (alive && host !== null && host.parentElement !== row) { try { row.appendChild(host); } catch { /* ignore */ } }
 							});
 							keep.observe(row, { childList: true });
 						}
 						setBox(host);
-						return;
+					} else if (host !== null && host.parentElement !== row) {
+						try { row.appendChild(host); } catch { /* ignore */ }
 					}
-					if (host !== null && host.parentElement !== row) { try { row.appendChild(host); } catch { /* ignore */ } }
+					syncStyle();
 				};
 				attach();
-				// 侧栏可能后挂载、或整行被 React 换掉：轮询兜底（没附着前快一点，免得按钮姗姗来迟）。
+				// 侧栏可能后挂载、或整行被 React 换掉：轮询兜底（顺带把类名/图标与官方保持同步）。
 				let timer = null;
-				const tick = () => { attach(); if (alive) timer = setTimeout(tick, host === null ? 100 : 1000); };
+				const tick = () => { attach(); if (alive) timer = setTimeout(tick, host === null ? 100 : 800); };
 				timer = setTimeout(tick, 0);
 				return () => {
 					alive = false;
@@ -444,13 +486,13 @@ window.__ModuleLoader__.load({
 			}, [enabled]);
 			return box;
 		}
-		/** 左栏顶栏的拓展栏开关：优先落进官方品牌行（官方折叠按钮右侧），拿不到落点就退回标签条尾部。 */
+		/** 左栏顶栏的拓展栏开关：落进品牌行就走了（按钮已经挂在那儿），拿不到落点就在标签条尾部兜底。 */
 		function VKSidebarTabTail(props) {
 			const wide = !(props !== undefined && props !== null && props.wide === false);
 			const box = useBrandRowAnchor(wide);
 			if (!wide) return h(VKRightbarToggle, { rail: true });
-			const toggle = h(VKRightbarToggle, { brand: true });
-			return box === null ? h("div", { className: "vk_tabTail" }, toggle) : createPortal(toggle, box);
+			if (box !== null) return null;
+			return h("div", { className: "vk_tabTail" }, h(VKRightbarToggle, {}));
 		}
 
 		/* ── 官方条目镜像（不改官方包，把官方注册的渲染能力搬到私有槽上） ── */
