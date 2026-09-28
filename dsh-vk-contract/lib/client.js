@@ -22,9 +22,6 @@ window.__ModuleLoader__.load({
         viewer: 'vk.rightbar.viewer',
         files: 'vk.rightbar.files',
       },
-      bottom: {
-        cmdstrip: 'vk.bottom.cmdstrip'
-      },
       settings: {
         persona: 'vk.settings.persona',
         skills: 'vk.settings.skills',
@@ -38,15 +35,11 @@ window.__ModuleLoader__.load({
         headerLeft: 'vk.session.header.left',
         headerRight: 'vk.session.header.right'
       },
-      overlay: 'vk.overlay',
-      statusbar: {
-        left: 'vk.statusbar.left',
-        right: 'vk.statusbar.right'
-      }
+      overlay: 'vk.overlay'
     };
 
     /* ── 区域 ─────────────────────────────────────────────────── */
-    const VK_AREAS = ['sidebar', 'rightbar', 'bottom', 'settings', 'input', 'session', 'overlay', 'statusbar'];
+    const VK_AREAS = ['sidebar', 'rightbar', 'settings', 'input', 'session', 'overlay'];
 
     /* ── 槽位总表（唯一真源）────────────────────────────────────
      * 表序按界面分区排列：一、左栏  二、中间会话栏  三、右栏拓展栏  四、设置页  五、帧级。
@@ -70,9 +63,9 @@ window.__ModuleLoader__.load({
     const VK_SLOT_TABLE = [
       /* ═══ 一、左栏 ═══ */
       { area: 'sidebar', id: 'sessions', slot: VK.sidebar.sessions, kind: 'single', scope: 'root', pane: true, label: '会话', order: 10, provider: 'dsh-vk-layout', origin: 'official-alias', legacy: ['sidebar.workspaces', '[自研] vk.sidebar.browser'] },
-      { area: 'sidebar', id: 'files', slot: VK.sidebar.files, kind: 'list', scope: 'root', pane: true, label: '文件', order: 20, provider: 'dsh-vk-files', origin: 'vk-new', legacy: [] },
+      { area: 'sidebar', id: 'files', slot: VK.sidebar.files, kind: 'list', scope: 'root', pane: true, label: '文件', order: 20, provider: 'dsh-files-tree', origin: 'vk-new', legacy: [] },
       { area: 'sidebar', id: 'tasks', slot: VK.sidebar.tasks, kind: 'single', scope: 'root', pane: true, label: '任务', order: 30, provider: 'dsh-lt-tasks', origin: 'vk-new', legacy: ['[自研] sidebar.tasks'] },
-      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '工具', order: 40, provider: 'dsh-extensions-panel / dsh-lan-services', origin: 'vk-new', legacy: ['[自研] sidebar.extensions'] },
+      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '工具', order: 40, provider: 'dsh-tools / dsh-lan-services', origin: 'vk-new', legacy: ['[自研] sidebar.extensions'] },
       { area: 'sidebar', id: null, slot: VK.sidebar.footer, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-wallet / dsh-archive-button', origin: 'official-alias', legacy: ['sidebar.footer.action'] },
       { area: 'sidebar', id: null, slot: VK.sidebar.dirflow, kind: 'single', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-vk-layout', mirror: true, origin: 'official-alias', legacy: ['sidebar.workspaces.directoryFlow'] },
 
@@ -80,12 +73,11 @@ window.__ModuleLoader__.load({
       { area: 'input', id: null, slot: VK.input.left, kind: 'single', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.left'] },
       { area: 'input', id: null, slot: VK.input.right, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.dock'] },
       { area: 'session', id: null, slot: VK.session.headerLeft, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.session.header.actions'] },
-      { area: 'session', id: null, slot: VK.session.headerRight, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-vk-terminal', origin: 'official-alias', legacy: ['conversation.session.header.utilities', 'conversation.session.header.corner'] },
+      { area: 'session', id: null, slot: VK.session.headerRight, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-restart-button', origin: 'official-alias', legacy: ['conversation.session.header.utilities', 'conversation.session.header.corner'] },
 
       /* ═══ 三、右栏拓展栏 ═══ */
-      { area: 'rightbar', id: 'viewer', slot: VK.rightbar.viewer, kind: 'list', scope: 'session', pane: true, label: '查看器', order: 10, provider: 'dsh-vk-viewer', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=view)'] },
-      { area: 'rightbar', id: 'files', slot: VK.rightbar.files, kind: 'list', scope: 'session', pane: true, label: '打开本机文件', order: 20, provider: 'dsh-vk-files', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=pick)'] },
-      { area: 'bottom', id: 'cmdstrip', slot: VK.bottom.cmdstrip, kind: 'list', scope: 'root', pane: true, label: '命令行', order: 10, provider: 'dsh-vk-cmdstrip (DOM 宿主，不走槽)', origin: 'vk-new', legacy: [] },
+      { area: 'rightbar', id: 'viewer', slot: VK.rightbar.viewer, kind: 'list', scope: 'session', pane: true, label: '查看器', order: 10, provider: 'dsh-viewer', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=view)'] },
+      { area: 'rightbar', id: 'files', slot: VK.rightbar.files, kind: 'list', scope: 'session', pane: true, label: '打开本机文件', order: 20, provider: 'dsh-files-open', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=pick)'] },
 
       /* ═══ 四、设置页 ═══ */
       { area: 'settings', id: 'persona', slot: VK.settings.persona, kind: 'list', scope: 'root', pane: true, label: '全局人设', order: 10, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=persona)'] },
@@ -93,9 +85,7 @@ window.__ModuleLoader__.load({
       { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=mcp)'] },
 
       /* ═══ 五、帧级 ═══ */
-      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] },
-      { area: 'statusbar', id: null, slot: VK.statusbar.left, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] },
-      { area: 'statusbar', id: null, slot: VK.statusbar.right, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] }
+      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] }
     ];
 
     /* ── 派生视图 ─────────────────────────────────────────────── */

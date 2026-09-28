@@ -1,5 +1,5 @@
 // dsh-vk-layout — 3栏layout 骨架：区域映射到官方插槽的宿主条目 + 标签条渲染。业务不在这里。
-// 未接线区域：bottom（由 dsh-vk-cmdstrip 自带 DOM 宿主）、statusbar（官方无对应槽位）。
+// 不入表的位置：右栏下段（dsh-cmdstrip 自带 DOM 宿主，不占槽）。
 window.__ModuleLoader__.load({
 	id: 'dsh-vk-layout',
 	factory: (require) => {
