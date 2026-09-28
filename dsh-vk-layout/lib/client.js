@@ -53,7 +53,7 @@ window.__ModuleLoader__.load({
 			".vk_areaHost{width:100%;height:100%;display:flex;flex-direction:column;min-height:0}",
 			".vk_paneStack{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}",
 			".vk_paneSlot{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}",
-			".vk_paneSlot:not(.vk_paneSlotActive){display:none}",
+			".vk_paneSlot:not(.vk_paneSlotActive){display:none}","[data-vk-pane=extensions]{overflow-y:auto}",
 			".vk_tabBar{display:flex;align-items:stretch;flex:none;min-width:0;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-sidebar-fill);container-type:inline-size}",
 			".vk_tabBtn{appearance:none;border:none;background:none;cursor:pointer;color:var(--dsw-alias-label-secondary);padding:7px 12px;font-size:12px;line-height:16px;font-family:inherit;position:relative;border-bottom:2px solid transparent;transition:color .12s,background-color .12s,border-color .12s;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}",
 			".vk_tabBtn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}",
@@ -962,14 +962,22 @@ window.__ModuleLoader__.load({
 					vkCmdWriteFlag(VK_CMD_OPEN_KEY, next);
 					this.emit();
 				},
-				setHeight(percent) {
-					const next = Math.max(VK_CMD_HEIGHT_MIN, Math.min(VK_CMD_HEIGHT_MAX, Math.round(percent)));
-					if (this.height === next) return;
-					this.height = next;
-					try { window.localStorage.setItem(VK_CMD_HEIGHT_KEY, String(next)); } catch { /* ignore */ }
-					this.emit();
-				},
-				pushHistory(text) {
+	setHeight(percent) {
+		const next = Math.max(VK_CMD_HEIGHT_MIN, Math.min(VK_CMD_HEIGHT_MAX, Math.round(percent)));
+		if (this.height === next) return;
+		this.height = next;
+		this.emit();
+		// 落盘节流：拖动时每个 pointermove 同步写 localStorage 会掉帧；250ms 合并一次，松手再补写。
+		if (this.persistTimer !== undefined) clearTimeout(this.persistTimer);
+		this.persistTimer = setTimeout(() => {
+			this.persistTimer = undefined;
+			try { window.localStorage.setItem(VK_CMD_HEIGHT_KEY, String(this.height)); } catch { /* ignore */ }
+		}, 250);
+	},
+	setHeightNow() {
+		if (this.persistTimer !== undefined) { clearTimeout(this.persistTimer); this.persistTimer = undefined; }
+		try { window.localStorage.setItem(VK_CMD_HEIGHT_KEY, String(this.height)); } catch { /* ignore */ }
+	},				pushHistory(text) {
 					const line = String(text);
 					const list = this.history.filter((item) => item !== line);
 					list.push(line);
@@ -1167,6 +1175,11 @@ window.__ModuleLoader__.load({
 				return null;
 			}
 
+			/** 官方面板是否处于全屏模式（fullscreen 时它是 position:fixed;inset:0，上下分界无意义）。 */
+						/** 是否正在拖动下界高度（拖拽中 handle 带 data-dragging）。 */
+			function vkCmdDragging() {
+				try { return document.querySelector(".vk_cmdHandle[data-dragging]") !== null; } catch { return false; }
+			}
 			/** 官方面板是否处于全屏模式（fullscreen 时它是 position:fixed;inset:0，上下分界无意义）。 */
 			function vkCmdFullscreen() {
 				try {
@@ -1377,7 +1390,11 @@ window.__ModuleLoader__.load({
 			}
 					// 「分割」实证：padding 先试，**每次实读**两个 rect 判它到底有没有把官方面板抬起来；
 					// 还重叠才动官方盒子的内联 bottom（见 splitCheck 上面那段实测）。
-					const split = splitCheck(px);
+			if (vkCmdDragging() === true) {
+				// 拖动中：只更新宿主高度（一次样式写，便宜）。官方盒子的内联 bottom 与诊断行留到松手后，
+				// 否则每个 pointermove 都会让官方整块面板（全屏时是 fixed; inset:0）重排一次。
+				vkCmdProbe({ colFound: true, inCol: host.parentElement === hostParent, colWidth, pinnedPx: px, panelRendered: host.childElementCount > 0, err: null, dragging: true });
+			} else {
 					vkCmdProbe({
 						colFound: true, inCol: host.parentElement === col, colWidth, pinnedPx: px, panelRendered: host.childElementCount > 0, err: null,
 						split: split.mode, splitGap: split.gap, splitOverlap: split.overlap, splitPanelH: split.panelH, touchedOfficial: split.touchedOfficial
@@ -1392,7 +1409,7 @@ window.__ModuleLoader__.load({
 						" inCol=" + (host.parentElement === col ? "1" : "0") +
 						" clip=" + vkCmdText(vkCmdClipAncestor(col)) +
 						" · " + VK_CMD_BUILD);
-				};
+			}				};
 				tick();
 				const timer = window.setInterval(tick, 1000);
 				const onResize = () => tick();
@@ -1794,6 +1811,8 @@ window.__ModuleLoader__.load({
 							};
 							const up = () => {
 								delete handle.dataset.dragging;
+								try { vkCmdStore.setHeightNow(); } catch { /* ignore */ }
+								try { vkCmdStore.emit(); } catch { /* ignore */ }
 								try { handle.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
 								handle.removeEventListener("pointermove", move);
 								handle.removeEventListener("pointerup", up);
@@ -1808,8 +1827,6 @@ window.__ModuleLoader__.load({
 						h("span", { className: "vk_cmdTitle" }, h(VIcon, { name: "terminal", size: 13 }), "终端"),
 						h("span", { className: "vk_cmdCwd", title: "官方本机 PTY（PowerShell）· 会话 " + (sid.length > 0 ? sid : "—") },
 							sid.length > 0 ? "官方 PTY · " + vkCmdText(vkTermSessionLabel(sid)) : "等待会话"),
-						// 就地诊断：真机上肉眼可见（不开控制台就能把故障定位到「哪一格/多宽/被谁裁」）
-						h("span", { className: "vk_cmdDiag", "data-vk-cmd-diag": "true", title: "落位诊断：" + cmd.diag }, cmd.diag),
 						props === null
 							? h("span", { className: "vk_cmdBadge" }, entry === null ? "等待服务" : "—")
 							: h(VKTermBadge, { key: "vk-term-badge", props }),
