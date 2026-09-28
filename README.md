@@ -12,8 +12,8 @@
 |---|---|
 | `dsh-vk-contract` | 生态契约：槽名常量、`vkCard` 注册 API、服务名；无运行时行为 |
 | `dsh-vk-layout` | 骨架：区域宿主、标签条、槽接线与三个中立服务 |
-| `dsh-vk-files` | 文件栏：文件树 + 应用内目录浏览器 + 最近打开 / 文件列表 |
-| `dsh-vk-composer` | 输入区扩域：@ 引用数据源 + 文件搜索按钮 + 对话文件路径跳右栏 |
+| `dsh-vk-files-tree` | 文件家族 A：左栏「文件」Tab（文件树 + 应用内目录浏览器 + 最近打开 / 文件列表）+ 输入区 @ 引用，装上都有 |
+| `dsh-vk-files-open` | 文件家族 B：右栏「打开本机文件」标签，可单独安装 |
 | `dsh-vk-cmdstrip` | 右栏下段命令行面板（官方终端本体） |
 
 ## 装
@@ -23,8 +23,8 @@
 ```sh
 dsh plugin --profile web add file:<本仓库>/dsh-vk-contract
 dsh plugin --profile web add file:<本仓库>/dsh-vk-layout
-dsh plugin --profile web add file:<本仓库>/dsh-vk-files
-dsh plugin --profile web add file:<本仓库>/dsh-vk-composer
+dsh plugin --profile web add file:<本仓库>/dsh-vk-files-tree
+dsh plugin --profile web add file:<本仓库>/dsh-vk-files-open
 dsh plugin --profile web add file:<本仓库>/dsh-vk-cmdstrip
 ```
 
@@ -34,7 +34,7 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-cmdstrip
 
 | 项 | 位置 | 默认 |
 |---|---|---|
-| 文件栏落地页常用根 | `dsh-vk-files/lib/client.js` 的 `HOME_DIRS` | `[]`，按需补自己的目录 |
+| 文件栏落地页常用根 | `dsh-vk-files-tree/lib/client.js` 的 `HOME_DIRS` | `[]`，按需补自己的目录 |
 | 桌面快捷入口 | 同文件 `DESKTOP_HINT` | 空；填自己的桌面路径才显示 |
 
 ## 前提

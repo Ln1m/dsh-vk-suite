@@ -1,7 +1,7 @@
 {
-  "name": "dsh-vk-composer",
+  "name": "dsh-vk-files-tree",
   "version": "0.1.0",
-  "description": "3栏layout 输入区扩域：@ 引用数据源 + 文件搜索按钮 + 对话文件路径跳右栏。",
+  "description": "文件家族 A：左栏「文件」Tab（文件树）+ 输入区 @ 引用（装上都有）",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -34,11 +34,7 @@
   "license": "MIT",
   "author": "Ln1m (https://github.com/Ln1m)",
   "repository": {
-    "type": "git",
     "url": "git+https://github.com/Ln1m/dsh-vk-suite.git"
   },
-  "homepage": "https://github.com/Ln1m/dsh-vk-suite#readme",
-  "bugs": {
-    "url": "https://github.com/Ln1m/dsh-vk-suite/issues"
-  }
+  "homepage": "https://github.com/Ln1m/dsh-vk-suite#readme"
 }

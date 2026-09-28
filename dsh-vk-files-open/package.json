@@ -1,7 +1,7 @@
 {
-  "name": "dsh-vk-files",
+  "name": "dsh-vk-files-open",
   "version": "0.1.0",
-  "description": "3栏layout 文件栏：文件树 + 应用内目录浏览器 + 最近打开 / 文件列表。",
+  "description": "文件家族 B：右栏「打开本机文件」标签，可独立安装",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -34,11 +34,7 @@
   "license": "MIT",
   "author": "Ln1m (https://github.com/Ln1m)",
   "repository": {
-    "type": "git",
     "url": "git+https://github.com/Ln1m/dsh-vk-suite.git"
   },
-  "homepage": "https://github.com/Ln1m/dsh-vk-suite#readme",
-  "bugs": {
-    "url": "https://github.com/Ln1m/dsh-vk-suite/issues"
-  }
+  "homepage": "https://github.com/Ln1m/dsh-vk-suite#readme"
 }
