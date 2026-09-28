@@ -10,6 +10,8 @@ window.__ModuleLoader__.load({
 		const react = require('react');
 		const contract = require('dsh-vk-contract');
 		const h = react.createElement;
+		const ReactDOM = (() => { try { return require("react-dom"); } catch { return null; } })();
+		const createPortal = ReactDOM === null || typeof ReactDOM.createPortal !== "function" ? null : ReactDOM.createPortal;
 
 		const VK = contract.VK;
 		const VK_PANES = contract.VK_PANES;
@@ -82,7 +84,12 @@ window.__ModuleLoader__.load({
 			".vk_seatToggle{appearance:none;border:none;background:none;cursor:pointer;width:28px;height:28px;border-radius:7px;color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,color .12s}",
 			".vk_seatToggle:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
 			".vk_seatToggleOn{color:var(--vk-accent)}",
-			".vk_tabTail{display:flex;align-items:center;gap:2px;padding-right:4px}"
+			".vk_tabTail{display:flex;align-items:center;gap:2px;padding-right:4px}",
+			".vk_brandSlot{display:inline-flex;align-items:center;flex:none}",
+			".vk_brandBtn{appearance:none;border:none;background:none;cursor:pointer;width:28px;height:28px;border-radius:50%;color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center;flex:none;transition:background-color .12s,color .12s,transform .08s}",
+			".vk_brandBtn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
+			".vk_brandBtn:active{transform:scale(.93)}",
+			".vk_brandBtnOn{color:var(--vk-accent)}"
 		].join("");
 		(function injectCss() {
 			if (typeof document === "undefined") return;
@@ -225,7 +232,7 @@ window.__ModuleLoader__.load({
 				const renderSlot = props === undefined || props === null ? undefined : props.renderSlot;
 				const wide = props === undefined || props === null ? undefined : props.wide;
 				const expandSidebar = props === undefined || props === null ? undefined : props.expandSidebar;
-				const tail = typeof config.tail === "function" ? config.tail(props) : null;
+				const tail = typeof config.tail === "function" ? h(config.tail, props) : null;
 				const onSelect = (id) => layoutSelect(area, id);
 					const onExpand = typeof expandSidebar === "function" ? expandSidebar : null;
 				if (config.rail === true && wide === false) {
@@ -359,21 +366,91 @@ window.__ModuleLoader__.load({
 		}
 		function VKRightbarToggle(props) {
 			const rail = props !== undefined && props !== null && props.rail === true;
+			const brand = props !== undefined && props !== null && props.brand === true;
 			const pane = useVKRightPane();
+			const base = brand ? "vk_brandBtn" : rail ? "vk_railBtn" : "vk_seatToggle";
+			const on = brand ? " vk_brandBtnOn" : rail ? " vk_railBtnActive" : " vk_seatToggleOn";
 			return h("button", {
 				type: "button",
-				className: (rail ? "vk_railBtn" : "vk_seatToggle") + (pane.open ? (rail ? " vk_railBtnActive" : " vk_seatToggleOn") : ""),
+				className: base + (pane.open ? on : ""),
 				title: pane.open ? "收起拓展栏（官方右侧栏）" : "打开拓展栏（官方右侧栏）",
 				"aria-label": pane.open ? "收起拓展栏" : "打开拓展栏",
-				"data-vk-right-toggle": rail ? "rail" : "true",
+				"data-vk-right-toggle": rail ? "rail" : brand ? "brand" : "true",
 				onClick: pane.toggle
-			}, h(VIcon, { name: "panelRight", size: rail ? 16 : 15 }));
+			}, h(VIcon, { name: "panelRight", size: rail || brand ? 16 : 15 }));
 		}
-		/** 左栏标签条的尾部：只剩拓展栏开关 —— 官方品牌行顶部自带那颗折叠按钮。 */
-		function sidebarTabTail(props) {
-			const narrow = props !== undefined && props !== null && props.wide === false;
-			if (narrow) return h(VKRightbarToggle, { rail: true });
-			return h("div", { className: "vk_tabTail" }, h(VKRightbarToggle, { rail: false }));
+		/* ── 品牌行落位 ───────────────────────────────────────────────
+		   官方左栏顶栏是「品牌按钮 + 折叠按钮」，没有插槽可投。这里从 vk 自己的区域宿主往上找品牌行，
+		   在它末尾挂一个盒子、把「拓展栏开关」portal 进去 —— 落点就在官方折叠按钮右侧。
+		   只加这一颗：官方那颗折叠按钮原样不动（不隐藏、不改），拿不到落点就退回标签条尾部。 */
+		const BRAND_SLOT_CLASS = "vk_brandSlot";
+		function findBrandRow(from) {
+			if (from === null || from === undefined || typeof from.parentElement === "undefined") return null;
+			let node = from.parentElement;
+			while (node !== null && node !== document.body && node !== document.documentElement) {
+				for (const child of node.children) {
+					if (child === from || child.contains(from)) continue;
+					if (child.querySelector("button") !== null) return child;
+				}
+				node = node.parentElement;
+			}
+			return null;
+		}
+		function useBrandRowAnchor(enabled) {
+			const [box, setBox] = react.useState(null);
+			const anchor = typeof react.useLayoutEffect === "function" ? react.useLayoutEffect : react.useEffect;
+			anchor(() => {
+				setBox(null);
+				if (enabled !== true || typeof document === "undefined" || createPortal === null) return void 0;
+				let alive = true;
+				let row = null;
+				let host = null;
+				let keep = null;
+				const attach = () => {
+					if (!alive) return;
+					const next = findBrandRow(document.querySelector("[data-vk-area=\"sidebar\"]"));
+					if (next === null) return;
+					if (next !== row) {
+						if (keep !== null) { try { keep.disconnect(); } catch { /* ignore */ } keep = null; }
+						if (host !== null) { try { host.remove(); } catch { /* ignore */ } }
+						row = next;
+						host = document.createElement("span");
+						host.className = BRAND_SLOT_CLASS;
+						host.setAttribute("data-vk-brand-slot", "1");
+						row.appendChild(host);
+						if (typeof MutationObserver !== "undefined") {
+							// React 重排品牌行时会把它不认识的节点挤掉，发现被挤掉就挂回去。
+							keep = new MutationObserver(() => {
+								if (alive && host !== null && host.parentElement !== row) { try { row.appendChild(host); } catch { /* ignore */ } }
+							});
+							keep.observe(row, { childList: true });
+						}
+						setBox(host);
+						return;
+					}
+					if (host !== null && host.parentElement !== row) { try { row.appendChild(host); } catch { /* ignore */ } }
+				};
+				attach();
+				// 侧栏可能后挂载、或整行被 React 换掉：轮询兜底（没附着前快一点，免得按钮姗姗来迟）。
+				let timer = null;
+				const tick = () => { attach(); if (alive) timer = setTimeout(tick, host === null ? 100 : 1000); };
+				timer = setTimeout(tick, 0);
+				return () => {
+					alive = false;
+					if (timer !== null) clearTimeout(timer);
+					if (keep !== null) { try { keep.disconnect(); } catch { /* ignore */ } }
+					if (host !== null) { try { host.remove(); } catch { /* ignore */ } }
+				};
+			}, [enabled]);
+			return box;
+		}
+		/** 左栏顶栏的拓展栏开关：优先落进官方品牌行（官方折叠按钮右侧），拿不到落点就退回标签条尾部。 */
+		function VKSidebarTabTail(props) {
+			const wide = !(props !== undefined && props !== null && props.wide === false);
+			const box = useBrandRowAnchor(wide);
+			if (!wide) return h(VKRightbarToggle, { rail: true });
+			const toggle = h(VKRightbarToggle, { brand: true });
+			return box === null ? h("div", { className: "vk_tabTail" }, toggle) : createPortal(toggle, box);
 		}
 
 		/* ── 官方条目镜像（不改官方包，把官方注册的渲染能力搬到私有槽上） ── */
@@ -511,7 +588,7 @@ window.__ModuleLoader__.load({
 				name: "sidebar.workspaces",
 				priority: -2,
 				children: childMap("sidebar")
-			}, makePaneAreaHost("sidebar", { rail: true, tail: sidebarTabTail })));
+			}, makePaneAreaHost("sidebar", { rail: true, tail: VKSidebarTabTail })));
 
 			/* 左栏「会话」栏目：官方 WorkspaceBrowser 本体镜像到私有槽，不自绘。 */
 			const browserMirror = vkCreateMirror(ctx, "sidebar.workspaces", VK.sidebar.sessions, {
