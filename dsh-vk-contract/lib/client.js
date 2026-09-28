@@ -21,7 +21,6 @@ window.__ModuleLoader__.load({
       rightbar: {
         viewer: 'vk.rightbar.viewer',
         files: 'vk.rightbar.files',
-        tools: 'vk.rightbar.tools'
       },
       bottom: {
         cmdstrip: 'vk.bottom.cmdstrip'
@@ -50,6 +49,9 @@ window.__ModuleLoader__.load({
     const VK_AREAS = ['sidebar', 'rightbar', 'bottom', 'settings', 'input', 'session', 'overlay', 'statusbar'];
 
     /* ── 槽位总表（唯一真源）────────────────────────────────────
+     * 表序按界面分区排列：一、左栏  二、中间会话栏  三、右栏拓展栏  四、设置页  五、帧级。
+     * 表内顺序不参与渲染（渲染按 order 排序），重排只为阅读。
+     *
      * area      区域
      * id        栏目 id（pane 必填）
      * slot      槽名
@@ -60,34 +62,40 @@ window.__ModuleLoader__.load({
      * order     区域内顺序（pane 必填）
      * provider  预期投递方；null = 预留
      * mirror    true = 该槽由镜像条目声明，区域宿主不得重复声明（声明是排他的，重复会 already declared）
-     * legacy    旧槽名，仅供迁移对照
+     * origin    归属：
+     *             official-alias = 官方槽的别名，功能可退回官方（插件不该硬依赖本表）
+     *             vk-new         = vk 独占的新增能力，官方没有对应位置
+     * legacy    旧槽名，仅供迁移对照；标 [自研] 的是本站早期自研名，不是官方槽
      * ──────────────────────────────────────────────────────── */
     const VK_SLOT_TABLE = [
-      // 左栏
-      { area: 'sidebar', id: 'sessions', slot: VK.sidebar.sessions, kind: 'single', scope: 'root', pane: true, label: '会话', order: 10, provider: 'dsh-vk-layout', legacy: ['vk.sidebar.browser', 'sidebar.workspaces(官方)'] },
-      { area: 'sidebar', id: 'files', slot: VK.sidebar.files, kind: 'list', scope: 'root', pane: true, label: '文件', order: 20, provider: 'dsh-vk-files', legacy: ['sidebar.workspaces(自研抢占)'] },
-      { area: 'sidebar', id: 'tasks', slot: VK.sidebar.tasks, kind: 'single', scope: 'root', pane: true, label: '任务', order: 30, provider: 'dsh-lt-tasks', legacy: ['sidebar.tasks'] },
-      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '功能', order: 40, provider: 'dsh-extensions-panel / dsh-lan-services', legacy: ['sidebar.extensions'] },
-      // 右栏
-      { area: 'rightbar', id: 'viewer', slot: VK.rightbar.viewer, kind: 'list', scope: 'session', pane: true, label: '查看器', order: 10, provider: 'dsh-vk-viewer', legacy: ['sidebar.right.pane.tab(key=view)'] },
-      { area: 'rightbar', id: 'files', slot: VK.rightbar.files, kind: 'list', scope: 'session', pane: true, label: '打开本机文件', order: 20, provider: 'dsh-vk-files', legacy: ['sidebar.right.pane.tab(key=pick)'] },
-      { area: 'rightbar', id: 'tools', slot: VK.rightbar.tools, kind: 'list', scope: 'session', pane: true, label: '工具', order: 30, provider: null, legacy: [] },
-      // 底部
-      { area: 'bottom', id: 'cmdstrip', slot: VK.bottom.cmdstrip, kind: 'list', scope: 'root', pane: true, label: '命令行', order: 10, provider: 'dsh-vk-cmdstrip (DOM 宿主，不走槽)', legacy: ['data-vk-cmd-*(DOM 宿主)'] },
-      // 设置页
-      { area: 'settings', id: 'persona', slot: VK.settings.persona, kind: 'list', scope: 'root', pane: true, label: '全局人设', order: 10, provider: 'dsh-vk-settings', legacy: ['settings.section(id=persona)'] },
-      { area: 'settings', id: 'skills', slot: VK.settings.skills, kind: 'list', scope: 'root', pane: true, label: 'Skill 管理', order: 20, provider: 'dsh-vk-settings', legacy: ['settings.section(id=skills)'] },
-      { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', legacy: ['settings.section(id=mcp)'] },
-      // 固定位置
-      { area: 'sidebar', id: null, slot: VK.sidebar.footer, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-wallet / dsh-archive-button', legacy: ['sidebar.footer.action'] },
-      { area: 'sidebar', id: null, slot: VK.sidebar.dirflow, kind: 'single', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-vk-layout', mirror: true, legacy: ['sidebar.workspaces.directoryFlow(官方)'] },
-      { area: 'input', id: null, slot: VK.input.left, kind: 'single', scope: 'session', pane: false, label: null, order: null, provider: null, legacy: ['conversation.input.left(官方槽承载 composer 搜索按钮)'] },
-      { area: 'input', id: null, slot: VK.input.right, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-skill-sets', legacy: ['conversation.input.dock(官方：输入框上方整宽一行 / list)'] },
-      { area: 'session', id: null, slot: VK.session.headerLeft, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, legacy: ['conversation.session.header.actions'] },
-      { area: 'session', id: null, slot: VK.session.headerRight, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-vk-terminal', legacy: ['conversation.session.header.utilities', 'conversation.session.header.corner'] },
-      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, legacy: ['shell.overlay'] },
-      { area: 'statusbar', id: null, slot: VK.statusbar.left, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, legacy: [] },
-      { area: 'statusbar', id: null, slot: VK.statusbar.right, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, legacy: [] }
+      /* ═══ 一、左栏 ═══ */
+      { area: 'sidebar', id: 'sessions', slot: VK.sidebar.sessions, kind: 'single', scope: 'root', pane: true, label: '会话', order: 10, provider: 'dsh-vk-layout', origin: 'official-alias', legacy: ['sidebar.workspaces', '[自研] vk.sidebar.browser'] },
+      { area: 'sidebar', id: 'files', slot: VK.sidebar.files, kind: 'list', scope: 'root', pane: true, label: '文件', order: 20, provider: 'dsh-vk-files', origin: 'vk-new', legacy: [] },
+      { area: 'sidebar', id: 'tasks', slot: VK.sidebar.tasks, kind: 'single', scope: 'root', pane: true, label: '任务', order: 30, provider: 'dsh-lt-tasks', origin: 'vk-new', legacy: ['[自研] sidebar.tasks'] },
+      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '功能', order: 40, provider: 'dsh-extensions-panel / dsh-lan-services', origin: 'vk-new', legacy: ['[自研] sidebar.extensions'] },
+      { area: 'sidebar', id: null, slot: VK.sidebar.footer, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-wallet / dsh-archive-button', origin: 'official-alias', legacy: ['sidebar.footer.action'] },
+      { area: 'sidebar', id: null, slot: VK.sidebar.dirflow, kind: 'single', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-vk-layout', mirror: true, origin: 'official-alias', legacy: ['sidebar.workspaces.directoryFlow'] },
+
+      /* ═══ 二、中间会话栏 ═══ */
+      { area: 'input', id: null, slot: VK.input.left, kind: 'single', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.left'] },
+      { area: 'input', id: null, slot: VK.input.right, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.dock'] },
+      { area: 'session', id: null, slot: VK.session.headerLeft, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.session.header.actions'] },
+      { area: 'session', id: null, slot: VK.session.headerRight, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-vk-terminal', origin: 'official-alias', legacy: ['conversation.session.header.utilities', 'conversation.session.header.corner'] },
+
+      /* ═══ 三、右栏拓展栏 ═══ */
+      { area: 'rightbar', id: 'viewer', slot: VK.rightbar.viewer, kind: 'list', scope: 'session', pane: true, label: '查看器', order: 10, provider: 'dsh-vk-viewer', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=view)'] },
+      { area: 'rightbar', id: 'files', slot: VK.rightbar.files, kind: 'list', scope: 'session', pane: true, label: '打开本机文件', order: 20, provider: 'dsh-vk-files', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=pick)'] },
+      { area: 'bottom', id: 'cmdstrip', slot: VK.bottom.cmdstrip, kind: 'list', scope: 'root', pane: true, label: '命令行', order: 10, provider: 'dsh-vk-cmdstrip (DOM 宿主，不走槽)', origin: 'vk-new', legacy: [] },
+
+      /* ═══ 四、设置页 ═══ */
+      { area: 'settings', id: 'persona', slot: VK.settings.persona, kind: 'list', scope: 'root', pane: true, label: '全局人设', order: 10, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=persona)'] },
+      { area: 'settings', id: 'skills', slot: VK.settings.skills, kind: 'list', scope: 'root', pane: true, label: 'Skill 管理', order: 20, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=skills)'] },
+      { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=mcp)'] },
+
+      /* ═══ 五、帧级 ═══ */
+      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] },
+      { area: 'statusbar', id: null, slot: VK.statusbar.left, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] },
+      { area: 'statusbar', id: null, slot: VK.statusbar.right, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] }
     ];
 
     /* ── 派生视图 ─────────────────────────────────────────────── */
