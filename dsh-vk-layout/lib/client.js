@@ -419,15 +419,27 @@ window.__ModuleLoader__.load({
 				let keep = null;
 				let lastIcon = null;
 				/** 与官方那颗共用类名与图标：尺寸、描边、悬停状态同源。 */
+				/** 与官方那颗同源：类名叠加、图标照抄并强制显示（官方平时是悬停才显），照抄不到就自己画一个同规格的。 */
 				const syncStyle = () => {
-					if (own === null || official === null) return;
-					const want = official.className + " vk_brandOwn";
+					if (own === null) return;
+					const want = (official === null ? "" : official.className + " ") + "vk_brandBtn vk_brandOwn";
 					if (own.className !== want) own.className = want;
-					if (lastIcon !== official.innerHTML) {
-						lastIcon = official.innerHTML;
-						own.innerHTML = official.innerHTML;
-						const svg = own.querySelector("svg");
-						if (svg !== null) svg.style.transform = "scaleX(-1)";
+					const iconHtml = official === null ? "" : official.innerHTML;
+					if (lastIcon !== iconHtml) {
+						lastIcon = iconHtml;
+						own.innerHTML = iconHtml;
+						let svg = own.querySelector("svg");
+						if (svg === null) {
+							own.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"2\" y=\"3\" width=\"20\" height=\"18\" rx=\"3\"/><line x1=\"14\" y1=\"3\" x2=\"14\" y2=\"21\"/></svg>";
+							own.setAttribute("data-vk-icon", "fallback");
+							svg = own.querySelector("svg");
+						} else {
+							own.setAttribute("data-vk-icon", "official");
+						}
+						if (svg !== null) {
+							svg.style.display = "inline";
+							svg.style.transform = own.getAttribute("data-vk-icon") === "official" ? "scaleX(-1)" : "";
+						}
 					}
 					let open = false;
 					try {
