@@ -1,4 +1,4 @@
-# dsh-vk-suite
+﻿# dsh-vk-suite
 
 [中文](README.md) · English
 
@@ -41,7 +41,7 @@ Restart the web instance afterwards.
 | Item | Where | Default |
 |---|---|---|
 | Landing-page roots for the files column | `HOME_DIRS` in `dsh-vk-files/lib/client.js` | `[]` — add your own directories |
-| Desktop shortcut entry | `DESKTOP_HINT` in the same file | `D:\Desktop` |
+| Desktop shortcut entry | `DESKTOP_HINT` in the same file | empty; set your own desktop path to show it |
 
 ## Requirements
 

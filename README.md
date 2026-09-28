@@ -1,4 +1,4 @@
-# dsh-vk-suite
+﻿# dsh-vk-suite
 
 [English](README.en.md) · 中文
 
@@ -41,7 +41,7 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-cmdstrip
 | 项 | 位置 | 默认 |
 |---|---|---|
 | 文件栏落地页常用根 | `dsh-vk-files/lib/client.js` 的 `HOME_DIRS` | `[]`，按需补自己的目录 |
-| 桌面快捷入口 | 同文件 `DESKTOP_HINT` | `D:\Desktop` |
+| 桌面快捷入口 | 同文件 `DESKTOP_HINT` | 空；填自己的桌面路径才显示 |
 
 ## 前提
 
