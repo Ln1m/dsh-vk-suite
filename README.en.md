@@ -6,12 +6,12 @@
 
 *Screenshot of a running DSH instance; demo content is sanitized.*
 
-A framework repo with just two packages: contract + skeleton. Feature plugins live in their own repos and register into slots; there is no business logic in the skeleton.
+A framework repo with just two packages: contract + skeleton. The skeleton provides every three-column position — left-column tabs, right-column tabs and **the command panel in the right column's lower segment**; other feature plugins live in their own repos and register into slots.
 
 | Package | Role |
 |---|---|
 | `dsh-vk-contract` | Ecosystem contract: slot-name constants, the `vkCard` registration API, service names. No runtime behaviour |
-| `dsh-vk-layout` | Skeleton: the left-column tab host, the right-column tab host, slot wiring and three neutral services |
+| `dsh-vk-layout` | Skeleton: the left-column tab host, the right-column tab host (including the command panel in its lower segment), slot wiring and three neutral services |
 
 ## Install
 
@@ -28,7 +28,7 @@ Restart the web instance afterwards. The skeleton only provides positions; what 
 |---|---|---|
 | **Sidebar** | One single `sidebar.workspaces` browsing region, **no tabs**; plus `sidebar.panellist` (global panel icons) and `sidebar.footer.action` | Turns the browsing region into **four tabs**: Sessions (= official region), Files, Tasks, Extensions — the last three are `vk-new`; the footer seat is an official alias |
 | **Center (conversation)** | `main`, `conversation.session.header.*`, `conversation.input.*` | Untouched — alias forwarding only; plugins may register in the official slots directly |
-| **Right column** | `rightbar` + `sidebar.right.pane.tab` (keyed by id) | Viewer / Open-local-file are aliases of the official keyed slot |
+| **Right column** | `rightbar` + `sidebar.right.pane.tab` (keyed by id) | Viewer / Open-local-file are aliases of the official keyed slot; **the command panel in the lower segment ships with the skeleton** (the official terminal, own host node, no slot) |
 | **Settings** | `settings.section` (one list entry = one page, custom id allowed) | All three sections are aliases of `settings.section(id=…)` |
 | **Frame-wide** | `shell.overlay` | Overlay is an alias |
 
@@ -38,7 +38,6 @@ Restart the web instance afterwards. The skeleton only provides positions; what 
 |---|---|
 | [dsh-files](https://github.com/Ln1m/dsh-files) | `dsh-files-tree`: the sidebar "Files" tab (file tree + in-app directory browser + recent files) plus the composer's `@` references; `dsh-files-open`: the right-column "Open local file" tab |
 | [dsh-viewer](https://github.com/Ln1m/dsh-viewer) | Right-column "Viewer": Office / web / image / text preview |
-| [dsh-cmdstrip](https://github.com/Ln1m/dsh-cmdstrip) | Command panel in the lower segment of the right column (the official terminal); own host node, no slot |
 | [dsh-lt-tasks](https://github.com/Ln1m/dsh-lt-tasks) | The sidebar "Tasks" tab |
 | [dsh-tools](https://github.com/Ln1m/dsh-tools) | The sidebar "Extensions" tab (example) |
 | [dsh-lan-services](https://github.com/Ln1m/dsh-lan-services) | The sidebar "Extensions" tab (LAN services) |
