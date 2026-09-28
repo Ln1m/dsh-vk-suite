@@ -2,10 +2,9 @@
 
 [English](README.en.md) · 中文
 
-![三栏布局（暗色）界面示意](assets/vk-suite-layout.png)
-![三栏布局（亮色）界面示意](assets/vk-suite-layout-light.png)
+![三栏布局（暗色）界面实拍](assets/vk-suite-layout.png)
 
-*界面示意：按官方主题变量渲染的版式，非实机截图。*
+*界面实拍：截自本机运行中的 DSH 实例，示例内容已脱敏。*
 
 一套三栏 layout，8 个包合起来才成形。`dsh-vk-contract` 是契约，其余 7 个各填一格，都靠 `dsh.client.inject` 挂在契约上。
 

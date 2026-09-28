@@ -2,10 +2,9 @@
 
 [中文](README.md) · English
 
-![Three-column layout (dark)](assets/vk-suite-layout-en.png)
-![Three-column layout (light)](assets/vk-suite-layout-light.png)
+![Three-column layout (dark)](assets/vk-suite-layout.png)
 
-*Mockups: layout rendered from the official theme tokens, not screenshots of a running instance.*
+*Screenshot of a running DSH instance; demo content is sanitized.*
 
 A three-column layout for DSH. It takes all 8 packages to form: `dsh-vk-contract` is the contract, the other 7 each fill one pane and hook onto the contract through `dsh.client.inject`.
 
