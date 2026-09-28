@@ -454,7 +454,7 @@ window.__ModuleLoader__.load({
 			vkDiagUI("home-reset", reason + " wasOpen=" + String(wasOpen));
 			for (const fn of [...vkHomeState.subs]) { try { fn(null); } catch { /* 订阅方可能已卸载 */ } }
 		}
-		// 本机桌面目录（本机若已重定向，按下面的常量改）：目录浏览器根视图里与磁盘同级列出的快捷入口，探测存在才显示
+		// 本机桌面（已重定向到 D:\Desktop）：目录浏览器根视图里与磁盘同级列出的快捷入口，探测存在才显示
 		const DESKTOP_HINT = "D:\\Desktop";
 		/**
 		 * 当前会话 id（**文件栏按会话隔离的唯一基准**，2026-09-12 用户口径「每个对话不共享文件栏」）。
@@ -648,7 +648,7 @@ window.__ModuleLoader__.load({
 		//   ③ 对话输入区 @ 菜单右上角那颗放大镜——插入模式（insertMode），底部动作叫「引用」。
 		// 三处的根视图、面包屑、模糊搜索、隐藏项开关、上下级导航完全一致。
 		//
-		// props: { fileMode, mode, pickFolder, embedded, anchorX, openTarget, onOpenUrl,
+		// props: { fileMode, mode, pickFolder, embedded, anchorX, openTarget,
 		//          path, dir, err, drives, probing, desktopPath, query, search, showHidden,
 		//          onQuery, onGoto, onRoots, onToggleHidden, onReload, onClose, onPickFile, onOpen }
 		// ──────────────────────────────────────────────────────────────
@@ -828,7 +828,7 @@ window.__ModuleLoader__.load({
 						h("span", { className: "vk_browsePathIcon" }, h(VIcon, { name: "search", size: 12 })),
 						h("input", {
 							className: "vk_pickInput",
-							placeholder: fileMode ? "搜索文件名（模糊匹配；知道完整路径也可直接粘贴后回车；粘贴网址回车即开网页）" : "搜索文件夹名（模糊匹配；知道完整路径也可直接粘贴后回车）",
+							placeholder: fileMode ? "搜索文件名（模糊匹配；知道完整路径也可直接粘贴后回车）" : "搜索文件夹名（模糊匹配；知道完整路径也可直接粘贴后回车）",
 							value: query,
 							spellCheck: false,
 							autoFocus: true,
@@ -836,8 +836,6 @@ window.__ModuleLoader__.load({
 							onKeyDown: (e) => {
 								if (e.key === "Enter") {
 									const v = query.trim();
-									// 粘贴网址回车即在本标签开网页（只有认领了 onOpenUrl 的调用点走这条）
-									if (v.length > 0 && /^https?:\/\//i.test(v) && typeof props.onOpenUrl === "function") { props.onOpenUrl(v); return; }
 									if (v.length > 0 && (v.includes("\\") || v.includes("/") || /^[A-Za-z]:/.test(v))) props.onGoto(v);
 								}
 								if (e.key === "Escape") props.onClose();
@@ -1944,7 +1942,16 @@ window.__ModuleLoader__.load({
 
 
 /* ── 右栏「打开本机文件」类型（从旧实现搬迁）── */
-		const PICK_TAB_ID = "@anoslide/dsh-client-vscode-layout/pick";
+		/**
+		 * 本类型的 id。**必须等于右栏栏目的槽名**（`VK.rightbar.files`）：官方右栏正文是 keyed 槽，
+		 * 用 `definition.id` 去 `sidebar.right.pane.tab` 的 entries 里找 `options.key` 相同的正文条目
+		 * （源码 renderer：`entriesOfSlot(slotKey).find(e => e.options.key === opts.entryKey)`），
+		 * 找不到就渲染官方兜底文案「这类内容还没有可用的查看方式」。
+		 * vk 骨架（dsh-vk-layout）登记正文条目时用的 key 是**栏目槽名**，所以 id 与槽名不一致就等于没有正文。
+		 * 旧值 "@anoslide/dsh-client-vscode-layout/pick" 是旧单机布局插件的私有 id —— 那时正文由旧布局
+		 * 用同一个 id 自行登记，配对成立；2026-09-26 换 vk 骨架后配对断裂，本标签只剩兜底文案。
+		 */
+		const PICK_TAB_ID = VK.rightbar.files;
 		/**
 		 * 该类型的 kind。**故意的**取官方的 "files"：
 		 * 官方 ui-sidebar-files 的 files 类型是 builtin 段，右侧栏注册表允许「extension 段登记一个 builtin
@@ -2091,29 +2098,8 @@ window.__ModuleLoader__.load({
 					try { globalThis.__VK_LAST_OPEN__.stage = "throw"; globalThis.__VK_LAST_OPEN__.error = message; } catch { /* ignore */ }
 				}
 			}, [tab]);
-			/**
-			 * 粘贴网址 → 在本标签换成网页。
-			 * 走 `tab.actions.openTab(VIEW_TAB_KIND, { params: { url }, replaceTab: true })`：
-			 * 官方 `placeResource` 只吃 `dsh-resource://` 前缀的地址（http(s) 一律抛
-			 * `no registered tab type claims`，实测确认为前缀校验而非 pattern 问题），
-			 * 所以网页只能走「标签页类型路径」进来，网址放在 params.url 里。
-			 */
-			const openWeb = (u) => {
-				const url = String(u || "").trim();
-				if (!/^https?:\/\//i.test(url)) return;
-				try {
-					globalThis.__VK_LAST_OPEN__ = { at: new Date().toISOString(), stage: "web-click", url: url };
-					tab.actions.openTab(VIEW_TAB_KIND, { params: { url: url }, replaceTab: true });
-					setOpenError(null);
-					try { globalThis.__VK_LAST_OPEN__.stage = "web-ok"; } catch { /* ignore */ }
-				} catch (e) {
-					const message = String(e && e.message ? e.message : e);
-					setOpenError("无法打开该网址：" + message);
-					try { globalThis.__VK_LAST_OPEN__.stage = "web-throw"; globalThis.__VK_LAST_OPEN__.error = message; } catch { /* ignore */ }
-				}
-			};
 			return h("div", { className: "vk_pickTab", style: { width: "100%", height: "100%", display: "flex", flexDirection: "column", minHeight: 0 } },
-				openError !== null ? h("div", { className: "vk_openErr", style: { flex: "none" } }, openError) : null,
+				openError !== null ? h("div", { className: "vk_openErr" }, openError) : null,
 				h(VKBrowseModal, {
 					fileMode: true,
 					embedded: true,
@@ -2128,7 +2114,6 @@ window.__ModuleLoader__.load({
 					showHidden: showHidden,
 					onQuery: (v) => setQuery(v),
 					onGoto: (t) => goto(t),
-					onOpenUrl: openWeb,
 					onRoots: () => { setPath(""); setDir(null); setErr(null); setQuery(""); setSearch(null); },
 					onToggleHidden: () => setShowHidden((v) => !v),
 					onReload: () => probeRoots(),

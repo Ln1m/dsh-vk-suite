@@ -27,7 +27,12 @@ window.__ModuleLoader__.load({
 .vk_restartBtn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .vk_restartBtn:active{transform:scale(.93)}
 .vk_restartBtn:disabled{opacity:.55;cursor:default}
-.vk_restartArm{color:var(--dsw-alias-state-error-primary)}
+/* armed 态（两击确认的第一击）。必须**压过上面的 :hover**：鼠标点完还停在按钮上，
+   .vk_restartBtn:hover 是 (0,2,0)，比单类的 .vk_restartArm (0,1,0) 高，
+   旧的写法在悬停期间完全不生效 —— 界面上就是"点一次不会变红"、看不到任何待确认反馈（2026-09-28 实测）。
+   这里用双类选择器（同为 0,2,0 但排在 :hover 之后）并连 :hover 一起写死。 */
+.vk_restartBtn.vk_restartArm,
+.vk_restartBtn.vk_restartArm:hover{color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-interactive-bg-hover-danger)}
 `;
 		(function injectCss() {
 			if (typeof document === 'undefined') return;

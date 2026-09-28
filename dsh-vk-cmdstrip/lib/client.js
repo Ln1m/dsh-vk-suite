@@ -715,6 +715,13 @@ window.__ModuleLoader__.load({
 			};
 		}
 
+		/**
+		 * 右栏「本机文件」页签的类型 kind。
+		 * 跨包约定：dsh-vk-files 用这个 kind 顶替官方的 files 类型并登记正文。
+		 * 拆包（旧单机布局 → vk 套件）时这一行漏搬过，`sr.openTab(PICK_TAB_KIND, {})` 直接
+		 * ReferenceError，被下面的 catch 吞掉 → 这颗按钮点了没反应。
+		 */
+		const PICK_TAB_KIND = "files";
 		/** 在拓展栏里打开「本机文件」页签（复用自研已有 files 类型入口）。 */
 		function vkCmdOpenLocalFiles() {
 			try {
