@@ -22,6 +22,9 @@ window.__ModuleLoader__.load({
         viewer: 'vk.rightbar.viewer',
         files: 'vk.rightbar.files',
       },
+      bottom: {
+        cmdstrip: 'vk.bottom.cmdstrip'
+      },
       settings: {
         persona: 'vk.settings.persona',
         skills: 'vk.settings.skills',
@@ -35,11 +38,15 @@ window.__ModuleLoader__.load({
         headerLeft: 'vk.session.header.left',
         headerRight: 'vk.session.header.right'
       },
-      overlay: 'vk.overlay'
+      overlay: 'vk.overlay',
+      statusbar: {
+        left: 'vk.statusbar.left',
+        right: 'vk.statusbar.right'
+      }
     };
 
     /* ── 区域 ─────────────────────────────────────────────────── */
-    const VK_AREAS = ['sidebar', 'rightbar', 'settings', 'input', 'session', 'overlay'];
+    const VK_AREAS = ['sidebar', 'rightbar', 'bottom', 'settings', 'input', 'session', 'overlay', 'statusbar'];
 
     /* ── 槽位总表（唯一真源）────────────────────────────────────
      * 表序按界面分区排列：一、左栏  二、中间会话栏  三、右栏拓展栏  四、设置页  五、帧级。
@@ -78,6 +85,7 @@ window.__ModuleLoader__.load({
       /* ═══ 三、右栏拓展栏 ═══ */
       { area: 'rightbar', id: 'viewer', slot: VK.rightbar.viewer, kind: 'list', scope: 'session', pane: true, label: '查看器', order: 10, provider: 'dsh-viewer', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=view)'] },
       { area: 'rightbar', id: 'files', slot: VK.rightbar.files, kind: 'list', scope: 'session', pane: true, label: '打开本机文件', order: 20, provider: 'dsh-files-open', origin: 'official-alias', legacy: ['sidebar.right.pane.tab(key=pick)'] },
+      { area: 'bottom', id: 'cmdstrip', slot: VK.bottom.cmdstrip, kind: 'list', scope: 'root', pane: true, label: '命令行', order: 10, provider: 'dsh-vk-layout（代码已并入骨架）', origin: 'vk-new', legacy: [] },
 
       /* ═══ 四、设置页 ═══ */
       { area: 'settings', id: 'persona', slot: VK.settings.persona, kind: 'list', scope: 'root', pane: true, label: '全局人设', order: 10, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=persona)'] },
@@ -85,7 +93,9 @@ window.__ModuleLoader__.load({
       { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=mcp)'] },
 
       /* ═══ 五、帧级 ═══ */
-      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] }
+      { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] },
+      { area: 'statusbar', id: null, slot: VK.statusbar.left, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] },
+      { area: 'statusbar', id: null, slot: VK.statusbar.right, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'vk-new', legacy: [] }
     ];
 
     /* ── 派生视图 ─────────────────────────────────────────────── */

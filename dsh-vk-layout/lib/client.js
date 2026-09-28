@@ -60,6 +60,7 @@ window.__ModuleLoader__.load({
 			".vk_tabBtnActive{color:var(--dsw-alias-label-primary);border-bottom-color:var(--vk-accent)}",
 			".vk_tabGlyph{display:none;flex:none}",
 			".vk_tabText{white-space:nowrap}",
+			"@container (width<=400px){.vk_tabBtn{padding:7px 8px}}",
 			"@container (width<=264px){.vk_tabBtn{padding:7px 8px}.vk_tabText{display:none}.vk_tabGlyph{display:inline-flex;align-items:center}}",
 			".vk_tabBarSpacer{flex:1}",
 			".vk_tabBtnIcon{width:26px;padding:0;justify-content:center}",
@@ -842,7 +843,7 @@ window.__ModuleLoader__.load({
 
 			(function injectCmdCss() {
 				if (typeof document === 'undefined') return;
-				const plugin = 'dsh-vk-layout';
+				const plugin = 'dsh-vk-cmdstrip';
 				for (const old of document.querySelectorAll('style[data-plugin="' + plugin + '"]')) { try { old.remove(); } catch { /* ignore */ } }
 				const tag = document.createElement('style');
 				tag.dataset.plugin = plugin;
