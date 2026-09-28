@@ -72,7 +72,7 @@ window.__ModuleLoader__.load({
       { area: 'sidebar', id: 'sessions', slot: VK.sidebar.sessions, kind: 'single', scope: 'root', pane: true, label: '会话', order: 10, provider: 'dsh-vk-layout', origin: 'official-alias', legacy: ['sidebar.workspaces', '[自研] vk.sidebar.browser'] },
       { area: 'sidebar', id: 'files', slot: VK.sidebar.files, kind: 'list', scope: 'root', pane: true, label: '文件', order: 20, provider: 'dsh-vk-files', origin: 'vk-new', legacy: [] },
       { area: 'sidebar', id: 'tasks', slot: VK.sidebar.tasks, kind: 'single', scope: 'root', pane: true, label: '任务', order: 30, provider: 'dsh-lt-tasks', origin: 'vk-new', legacy: ['[自研] sidebar.tasks'] },
-      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '功能', order: 40, provider: 'dsh-extensions-panel / dsh-lan-services', origin: 'vk-new', legacy: ['[自研] sidebar.extensions'] },
+      { area: 'sidebar', id: 'extensions', slot: VK.sidebar.extensions, kind: 'list', scope: 'root', pane: true, label: '工具', order: 40, provider: 'dsh-extensions-panel / dsh-lan-services', origin: 'vk-new', legacy: ['[自研] sidebar.extensions'] },
       { area: 'sidebar', id: null, slot: VK.sidebar.footer, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-wallet / dsh-archive-button', origin: 'official-alias', legacy: ['sidebar.footer.action'] },
       { area: 'sidebar', id: null, slot: VK.sidebar.dirflow, kind: 'single', scope: 'root', pane: false, label: null, order: null, provider: 'dsh-vk-layout', mirror: true, origin: 'official-alias', legacy: ['sidebar.workspaces.directoryFlow'] },
 

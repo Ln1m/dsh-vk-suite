@@ -357,12 +357,6 @@ window.__ModuleLoader__.load({
 			};
 			return { open: open, toggle: toggle };
 		}
-		function collapseSidebar() {
-			try {
-				const official = ctxRef.current.get("layout");
-				if (official !== undefined && official !== null && typeof official.toggleSidebar === "function") official.toggleSidebar();
-			} catch { /* 官方布局缺失时无处可收 */ }
-		}
 		function VKRightbarToggle(props) {
 			const rail = props !== undefined && props !== null && props.rail === true;
 			const pane = useVKRightPane();
@@ -375,16 +369,11 @@ window.__ModuleLoader__.load({
 				onClick: pane.toggle
 			}, h(VIcon, { name: "panelRight", size: rail ? 16 : 15 }));
 		}
-		/** 左栏标签条的尾部：拓展栏开关 + 收起侧栏（旧实现在 Tab 条最右端的两颗）。 */
+		/** 左栏标签条的尾部：只剩拓展栏开关 —— 官方品牌行顶部自带那颗折叠按钮。 */
 		function sidebarTabTail(props) {
 			const narrow = props !== undefined && props !== null && props.wide === false;
 			if (narrow) return h(VKRightbarToggle, { rail: true });
-			return h("div", { className: "vk_tabTail" },
-				h(VKRightbarToggle, { rail: false }),
-				h("button", {
-					type: "button", className: "vk_seatToggle", title: "收起侧栏",
-					onClick: collapseSidebar
-				}, h(VIcon, { name: "chevronLeft", size: 15 })));
+			return h("div", { className: "vk_tabTail" }, h(VKRightbarToggle, { rail: false }));
 		}
 
 		/* ── 官方条目镜像（不改官方包，把官方注册的渲染能力搬到私有槽上） ── */

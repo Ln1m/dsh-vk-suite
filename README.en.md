@@ -6,7 +6,7 @@
 
 *Screenshot of a running DSH instance; demo content is sanitized.*
 
-A three-column layout for DSH. It takes all 8 packages to form: `dsh-vk-contract` is the contract, the other 7 each fill one pane and hook onto the contract through `dsh.client.inject`.
+A three-column layout for DSH. It takes all 5 packages to form: `dsh-vk-contract` is the contract, the other 4 each fill one pane and hook onto the contract through `dsh.client.inject`.
 
 | Package | Role |
 |---|---|
@@ -14,9 +14,6 @@ A three-column layout for DSH. It takes all 8 packages to form: `dsh-vk-contract
 | `dsh-vk-layout` | Skeleton: area hosts, tab strip, slot wiring and three neutral services |
 | `dsh-vk-files` | Files column: file tree + in-app directory browser + recent files / file list |
 | `dsh-vk-composer` | Composer: @-references to data sources + file-search button + jump from a chat path to the right column |
-| `dsh-vk-viewer` | Right-column viewer: Office documents / web pages / images / text |
-| `dsh-vk-settings` | Settings sections: global persona / skill management / MCP management |
-| `dsh-vk-terminal` | Session-header restart entry: two-click confirm + backend probe reset |
 | `dsh-vk-cmdstrip` | Command strip at the bottom of the right column (the official terminal itself) |
 
 ## Install
@@ -28,9 +25,6 @@ dsh plugin --profile web add file:<this repo>/dsh-vk-contract
 dsh plugin --profile web add file:<this repo>/dsh-vk-layout
 dsh plugin --profile web add file:<this repo>/dsh-vk-files
 dsh plugin --profile web add file:<this repo>/dsh-vk-composer
-dsh plugin --profile web add file:<this repo>/dsh-vk-viewer
-dsh plugin --profile web add file:<this repo>/dsh-vk-settings
-dsh plugin --profile web add file:<this repo>/dsh-vk-terminal
 dsh plugin --profile web add file:<this repo>/dsh-vk-cmdstrip
 ```
 
