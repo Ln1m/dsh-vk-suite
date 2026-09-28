@@ -47,6 +47,23 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-cmdstrip
 
 - 依赖官方 UI 包（`@deepseek-ai/dsh-client-ui-*`），由 DSH 运行时提供
 
+## 与官方槽位的对照
+
+vk 的槽分两类，契约表每条都带 `origin` 字段：
+
+- **`official-alias`**：官方槽的**别名**，功能都能退回官方（插件不该硬依赖）
+- **`vk-new`**：vk **独占的新增**，官方没有这个位置
+
+| 区域 | 官方原生 | vk 的做法 |
+|---|---|---|
+| **左栏** | 只有一整块 `sidebar.workspaces`（会话/工作区浏览区），**没有 Tab**；另有 `sidebar.panellist`（全局面板图标，官方自己没用）与 `sidebar.footer.action`（设置旁的动作位） | 把浏览区改造成**四个 Tab**：会话（= 官方浏览区）、文件、任务、功能——其中「文件 / 任务 / 功能」是 `vk-new`；底部动作位是官方槽的别名 |
+| **中间会话栏** | `main`（中央面板）、`conversation.session.header.*`、`conversation.input.left / right / dock / …` | **不动**，只做别名转发；插件可以直接挂官方槽（技能档已改挂官方 `conversation.input.dock`） |
+| **右栏拓展栏** | `rightbar` + `sidebar.right.pane.tab`（keyed：按 id 分发 Tab 正文） | 查看器 / 打开本机文件 都是官方 keyed 槽的别名；**底部命令行面板是 `vk-new`** |
+| **设置页** | `settings.section`（一个列表项 = 一页，可用自定义 id） | 三个分区是 `settings.section(id=…)` 的别名 |
+| **帧级** | `shell.overlay` | 覆盖层是别名；**底部状态栏是 `vk-new`** |
+
+**给插件作者**：优先挂官方槽；只有要用「左栏第 2/3/4 个 Tab、底部命令行、状态栏」这类 vk 独占位置时，才用 `vk.*` 槽。
+
 ## 给别的插件留的位置
 
 契约表里 `provider: null` 的行就是预留位：第三方插件不用改骨架，直接占。
