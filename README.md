@@ -36,19 +36,19 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-layout
 
 | 仓库 | 装了什么 |
 |---|---|
-| [dsh-files](https://github.com/Ln1m/dsh-files) | `dsh-files-tree`：左栏「文件」Tab（文件树 + 应用内目录浏览器 + 最近打开）+ 输入区 `@` 引用；`dsh-files-open`：右栏「打开本机文件」 |
-| [dsh-viewer](https://github.com/Ln1m/dsh-viewer) | 右栏「查看器」：Office / 网页 / 图片 / 文本预览 |
-| [dsh-lt-tasks](https://github.com/Ln1m/dsh-lt-tasks) | 左栏「任务」Tab |
-| [dsh-tools](https://github.com/Ln1m/dsh-tools) | 左栏「工具」Tab（范例） |
-| [dsh-lan-services](https://github.com/Ln1m/dsh-lan-services) | 左栏「工具」Tab（局域网服务） |
-| [dsh-wallet](https://github.com/Ln1m/dsh-wallet) / [dsh-archive-button](https://github.com/Ln1m/dsh-archive-button) | 左栏底部动作位 |
+| [dsh-files](https://github.com/Ln1m/dsh-side-files) | `dsh-files-tree`：左栏「文件」Tab（文件树 + 应用内目录浏览器 + 最近打开）+ 输入区 `@` 引用；`dsh-files-open`：右栏「打开本机文件」 |
+| [dsh-viewer](https://github.com/Ln1m/dsh-pane-viewer) | 右栏「查看器」：Office / 网页 / 图片 / 文本预览 |
+| [dsh-lt-tasks](https://github.com/Ln1m/dsh-side-tasks) | 左栏「任务」Tab |
+| [dsh-tools](https://github.com/Ln1m/dsh-side-tools) | 左栏「工具」Tab（范例） |
+| [dsh-lan-services](https://github.com/Ln1m/dsh-card-lan-services) | 左栏「工具」Tab（局域网服务） |
+| [dsh-wallet](https://github.com/Ln1m/dsh-foot-wallet) / [dsh-archive-button](https://github.com/Ln1m/dsh-foot-archive) | 左栏底部动作位 |
 
 ## 推荐怎么用 / 会跟谁冲突
 
 左栏那四个 Tab（会话 / 文件 / 任务 / 工具）是**本骨架**提供的，功能插件只往槽里放内容：
 
 - **功能插件各有两个版本**：各仓 `main` = **vk 版**（只注册 vk 槽，必须配本骨架），另有 `official` 分支 = **官方挂载版**（零 vk 依赖，只挂官方槽）。**推荐用 vk 版**：左栏 Tab 切换与右栏、设置的位置都在骨架里，只有 vk 版装得进这些位置；目前 `dsh-files`、`dsh-tools` 两仓还没有官方挂载版。
-- **推荐一起装**：左栏功能插件（[dsh-files](https://github.com/Ln1m/dsh-files) 的文件树、[dsh-lt-tasks](https://github.com/Ln1m/dsh-lt-tasks) 的任务、[dsh-tools](https://github.com/Ln1m/dsh-tools) / [dsh-lan-services](https://github.com/Ln1m/dsh-lan-services) 的工具、[dsh-wallet](https://github.com/Ln1m/dsh-wallet) / [dsh-archive-button](https://github.com/Ln1m/dsh-archive-button) 的底部动作位）**和本骨架配成一套用**：不装骨架时它们注册的槽没人声明，页面上什么都不多；只装骨架不装功能插件时，后三个 Tab 是空的。
+- **推荐一起装**：左栏功能插件（[dsh-files](https://github.com/Ln1m/dsh-side-files) 的文件树、[dsh-lt-tasks](https://github.com/Ln1m/dsh-side-tasks) 的任务、[dsh-tools](https://github.com/Ln1m/dsh-side-tools) / [dsh-lan-services](https://github.com/Ln1m/dsh-card-lan-services) 的工具、[dsh-wallet](https://github.com/Ln1m/dsh-foot-wallet) / [dsh-archive-button](https://github.com/Ln1m/dsh-foot-archive) 的底部动作位）**和本骨架配成一套用**：不装骨架时它们注册的槽没人声明，页面上什么都不多；只装骨架不装功能插件时，后三个 Tab 是空的。
 - **冲突按槽判定**（不是报错，是静默遮蔽）：同一槽位**同优先级**重复注册会抛错，**不同优先级**只有最高的那条渲染。本骨架占的槽：`sidebar.workspaces`（左栏正文，priority -2）、`conversation.session.header.corner`（会话头右上，-2）、`settings.section`（设置页分区）、`conversation.input.left`、`conversation.input.dock`、`sidebar.right.pane.tab`（keyed，按 tab id 分发）、`shell.overlay`。
 - **同类布局插件不要叠**：两个「三栏布局」类插件同时装，只有一个的左栏 / 右栏形状生效，另一个的按钮会整块不出现——这是槽位规则，不是报错。
 - **终端接管**：右栏下段的命令行面板不占槽（自建宿主），但按官方「终端」条目接管 `sidebar.right.pane.tab` 的一条 key；同样接管终端 tab 的插件会与它互斥。
