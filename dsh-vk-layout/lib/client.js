@@ -499,12 +499,13 @@ window.__ModuleLoader__.load({
 			}, [enabled]);
 			return box;
 		}
-		/** 左栏顶栏的拓展栏开关：落进品牌行就走了（按钮已经挂在那儿），拿不到落点就在标签条尾部兜底。 */
+		/** 左栏顶栏的拓展栏开关：落进品牌行就走了（按钮已经挂在那儿，折叠时也挂）。
+		    折叠态不再往图标栏里另放一颗 —— 左栏只留一颗，就在官方那颗折叠按钮旁边。 */
 		function VKSidebarTabTail(props) {
 			const wide = !(props !== undefined && props !== null && props.wide === false);
-			const box = useBrandRowAnchor(wide);
-			if (!wide) return h(VKRightbarToggle, { rail: true });
+			const box = useBrandRowAnchor(true);
 			if (box !== null) return null;
+			if (!wide) return null;
 			return h("div", { className: "vk_tabTail" }, h(VKRightbarToggle, {}));
 		}
 
@@ -549,6 +550,36 @@ window.__ModuleLoader__.load({
 			return { sync, dispose: drop };
 		}
 
+		/* ── 主页标签（开始页）────────────────────────────────────
+		   `replaceTab` 在官方 place() 里是一个 **tabId**，不是一个布尔量。调用方想表达的是
+		   「把这列里的开始页换掉」，所以这里先把主页标签找出来：guide 类型，或任何内容地址落在
+		   `sidebar://` 名下的页标签（开始页就是官方用这个 scheme 记的）。资源标签一律不算。 */
+		function vkIsHomeTab(tab) {
+			if (tab === void 0 || tab === null) return false;
+			if (tab.kind === "guide") return true;
+			return typeof tab.contentId === "string" && tab.contentId.indexOf("sidebar://") === 0;
+		}
+		function vkHomeTabId(sr) {
+			try {
+				const surface = typeof sr.mounted === "function" ? sr.mounted() : void 0;
+				const layout = surface === void 0 || surface === null ? void 0 : surface.layout;
+				if (layout === void 0 || layout === null) return void 0;
+				const tabs = layout.tabs === void 0 || layout.tabs === null ? {} : layout.tabs;
+				const pane = layout.nodes === void 0 || layout.nodes === null ? void 0 : layout.nodes[layout.activePaneId];
+				const ids = pane !== void 0 && pane !== null && Array.isArray(pane.tabs) ? pane.tabs : [];
+				for (const id of ids) if (vkIsHomeTab(tabs[id])) return id;
+				for (const id of Object.keys(tabs)) if (vkIsHomeTab(tabs[id])) return id;
+			} catch { /* 读不到布局就当没有主页标签 */ }
+			return void 0;
+		}
+		/** `replaceTab: true` 解析成主页标签 id；解析不到就退化成普通打开（再开一个标签）。 */
+		function vkOpenArgs(sr, address, replaceTab) {
+			if (typeof replaceTab === "string" && replaceTab.length > 0) return [address, { replaceTab: replaceTab }];
+			if (replaceTab !== true) return [address];
+			const home = vkHomeTabId(sr);
+			return home === void 0 ? [address] : [address, { replaceTab: home }];
+		}
+
 		/* ── 三个中立服务 ─────────────────────────────────────────── */
 		function makeServices(ctx) {
 			const layout = {
@@ -578,7 +609,7 @@ window.__ModuleLoader__.load({
 						const sr = ctx.get("sidebarRight");
 						if (sr === undefined || sr === null || typeof sr.openResource !== "function") return false;
 						if (config.expand !== false && typeof sr.isExpanded === "function" && sr.isExpanded() !== true && typeof sr.toggleExpanded === "function") sr.toggleExpanded();
-						const args = config.replaceTab === true ? [address, { replaceTab: true }] : [address];
+						const args = vkOpenArgs(sr, address, config.replaceTab);
 						sr.openResource.apply(sr, args);
 						return true;
 					} catch (error) {
