@@ -62,7 +62,31 @@ window.__ModuleLoader__.load({
 			".vk_tabText{white-space:nowrap}",
 			"@container (width<=400px){.vk_tabBtn{padding:7px 8px}}",
 			"@container (width<=264px){.vk_tabBtn{padding:7px 8px}.vk_tabText{display:none}.vk_tabGlyph{display:inline-flex;align-items:center}}",
-			".vk_tabBarSpacer{flex:1}",
+			".vk_tabBarSpacer{flex:1;min-width:0}",
+			// 记忆系统那颗在**任何标签行宽度**下都不许被挤掉（用户口径 2026-09-29）：
+			// 它自己不收缩，标签行也不许把它推出栏外。
+			".vk_tabBar{overflow:hidden}",
+			".vk_tabBar>.vk_tabBtnMem{margin-left:auto}",
+			// 记忆系统那颗（用户口径：展开态必须**看得见**）——用主文字色，别用次要色被背景吃掉
+			".vk_tabBtnMem{flex:0 0 30px;width:30px;min-width:30px;justify-content:center;padding:0;color:var(--dsw-alias-label-primary);opacity:1;visibility:visible}",
+			".vk_tabBtnMem:hover{color:var(--vk-accent)}",
+			".vk_tabBtnMem svg{display:block;stroke:currentColor}",
+			// 记忆那颗只有图标没有文字：.vk_tabGlyph 默认 display:none（≥264px 的标签行里只显示文字），
+			// 于是宽标签行下它渲染成空的 30px 方框 —— 用户报的「有按钮但看不见」。这里让它无条件显示。
+			".vk_tabBtnMem .vk_tabGlyph{display:inline-flex;align-items:center;justify-content:center}",
+			".vk_railBtnMem{color:var(--dsw-alias-label-primary)}",
+			// mnemon 自带入口一律藏掉（两个已知标记 + 文本兜底标记）
+			"[data-dsh-plugin=\"dsh-mnemon\"][data-dsh-part=\"sidebar-icon\"]{display:none!important}",
+			"[data-vk-mnemon-hidden=\"1\"]{display:none!important}",
+			// 「通用设置 / Agent 预设」页内 tab：**照抄官方插件页那套类名与规则**
+			// （逐字取自 @deepseek-ai/dsh-client-ui-settings-plugins 的 PluginsSettingsSection.module.css；
+			//  官方那支 CSS 通常已注入，这里作为兜底，保证样式不会塌）
+			".pbvGtq_tabs{border-bottom:.5px solid var(--dsw-alias-border-l2);align-items:flex-end;gap:22px;margin-top:2px;display:flex}",
+			".pbvGtq_tab{color:var(--dsw-alias-label-tertiary);font:inherit;cursor:pointer;background:0 0;border:0;padding:7px 1px 9px;font-size:13px;line-height:20px;position:relative}",
+			".pbvGtq_tab:hover,.pbvGtq_tab[data-active=true]{color:var(--dsw-alias-label-primary)}",
+			".pbvGtq_tab[data-active=true]:after{background:var(--dsw-alias-label-primary);content:\"\";border-radius:2px 2px 0 0;height:2px;position:absolute;bottom:-1px;left:0;right:0}",
+			// 自绘左栏里这两条子项搬到正文 tab 里去了，左栏只留一个「通用设置」
+			"[data-vk-hub-sub=\"general\"],[data-vk-hub-sub=\"agent-presets\"]{display:none!important}",
 			".vk_tabBtnIcon{width:26px;padding:0;justify-content:center}",
 			".vk_rail{display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px}",
 			".vk_railBtn{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:38px;height:38px;border-radius:9px;color:var(--dsw-alias-label-secondary);display:flex;align-items:center;justify-content:center;position:relative;transition:background-color .12s,color .12s,transform .08s}",
@@ -188,6 +212,50 @@ window.__ModuleLoader__.load({
 		}
 
 		/* ── 标签条 / 窄轨 ────────────────────────────────────────── */
+		/**
+		 * 记忆系统入口：打开 mnemon 面板。
+		 *
+		 * 2026-09-29 实机取证：`dsh-panel-activate` 事件**没有任何消费方**（mnemon 只处理
+		 * taskboard / ssh 两个 detail），以前只派事件等于什么都没做。真正能打开它的是官方左栏里
+		 * 那行按钮（`button[aria-label="记忆系统"]`，里面包着 `[data-dsh-part="sidebar-icon"]`）——
+		 * 它被我们按用户口径隐藏了（display:none），但程序化 click 照旧有效。
+		 * 先点它拿到「mnemon 已激活」，再由设置页那边把它搬进右栏；点不到才退回派事件。
+		 */
+		function vkActivateMemory() {
+			let clicked = false;
+			try {
+				// ① 官方那行按钮（唯一实测有效的通路）
+				for (const b of Array.from(document.querySelectorAll("button[aria-label]"))) {
+					if (String(b.getAttribute("aria-label") || "") !== "记忆系统") continue;
+					b.click();
+					clicked = true;
+					break;
+				}
+				// ② 退一步：按图标标记找它的按钮
+				if (clicked !== true) {
+					const icon = document.querySelector("[data-dsh-plugin=\"dsh-mnemon\"][data-dsh-part=\"sidebar-icon\"]");
+					if (icon !== null) {
+						const btn = typeof icon.closest === "function" ? icon.closest("button") : null;
+						if (btn !== null) { btn.click(); clicked = true; }
+					}
+				}
+			} catch { /* 落到事件通道 */ }
+			if (clicked !== true) {
+				try { document.dispatchEvent(new CustomEvent("dsh-panel-activate", { detail: "mnemon" })); } catch { /* ignore */ }
+			}
+			try { window.dispatchEvent(new CustomEvent("mnemon:anchor", { detail: "mnemon" })); } catch { /* ignore */ }
+		}
+		/** 记忆系统的图标（内联 SVG，不依赖官方图标导出）。 */
+		function VKMemoryGlyph({ size }) {
+			const px = size === undefined || size === null ? 14 : size;
+			return h("svg", {
+				viewBox: "0 0 24 24", width: px, height: px, fill: "none", stroke: "currentColor",
+				strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round"
+			},
+				h("ellipse", { cx: 12, cy: 5, rx: 8, ry: 3 }),
+				h("path", { d: "M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" }),
+				h("path", { d: "M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" }));
+		}
 		function VKTagStrip({ panes, activeId, onSelect, tail }) {
 			return h("div", { className: "vk_tabBar" },
 				panes.map((pane) => h("button", {
@@ -201,7 +269,17 @@ window.__ModuleLoader__.load({
 					h("span", { className: "vk_tabGlyph" }, h(VIcon, { name: PANE_GLYPH[pane.id] || "file", size: 14 })),
 					h("span", { className: "vk_tabText" }, pane.label))),
 				h("div", { className: "vk_tabBarSpacer" }),
-				tail === undefined || tail === null ? null : tail);
+				// 记忆系统入口：**整行最右**（用户口径 2026-09-29：就放在会话/文件那一行的最右边）。
+				// 所以它排在 tail 之后 —— tail 是右栏开合那颗，不能把它顶到记忆图标右边去。
+				tail === undefined || tail === null ? null : tail,
+				h("button", {
+					key: "memory",
+					type: "button",
+					className: "vk_tabBtn vk_tabBtnMem",
+					title: "记忆系统",
+					"data-vk-tab": "memory",
+					onClick: () => vkActivateMemory()
+				}, h("span", { className: "vk_tabGlyph" }, h(VKMemoryGlyph, { size: 14 }))));
 		}
 		function VKRail({ panes, activeId, onSelect, onExpand, tail }) {
 			return h("div", { className: "vk_rail" },
@@ -213,6 +291,15 @@ window.__ModuleLoader__.load({
 					"data-vk-rail": pane.id,
 					onClick: () => { onSelect(pane.id); if (typeof onExpand === "function") { try { onExpand(); } catch { /* ignore */ } } }
 				}, h(VIcon, { name: PANE_GLYPH[pane.id] || "file", size: 16 }))),
+				// 记忆系统入口常驻：窄轨（收起）态同样留一颗（用户口径 2026-09-29：不论左栏多宽都在）
+				h("button", {
+					key: "memory",
+					type: "button",
+					className: "vk_railBtn vk_railBtnMem",
+					title: "记忆系统",
+					"data-vk-rail": "memory",
+					onClick: () => vkActivateMemory()
+				}, h(VKMemoryGlyph, { size: 16 })),
 				tail === undefined || tail === null ? null : tail);
 		}
 
@@ -234,6 +321,27 @@ window.__ModuleLoader__.load({
 				const tail = typeof config.tail === "function" ? h(config.tail, props) : null;
 				const onSelect = (id) => layoutSelect(area, id);
 					const onExpand = typeof expandSidebar === "function" ? expandSidebar : null;
+				// 切标签 = 「刚离开的那一页」失活，它必须在这一拍把自己的展开态收回（用户口径 2026-09-29：
+				// 文件 / 任务 / 工具 切走再回来，里面的内容应当是收起的）。这是三条栏目**唯一**的收起时机，
+				// 各栏目不要另挑时机（切回时再收会先闪一下展开态 —— 用户报的「闪一下才收起」）。
+				// 通道按状态类型分两条，骨架只负责这一拍：
+				//   ① DOM 里可折叠的控件声明 aria-expanded —— 这里统一点回去（dls-ibar / dxp-ibar 这类卡片走它）；
+				//   ② 自研栏目的 React 状态收在自己的组件里，读 pane 的 active: true→false（files-tree / lt-tasks 走它）。
+				// 正文仍然全部挂载（见上面的注释），只收展开态。
+				const prevActive = react.useRef(activeId);
+				react.useEffect(() => {
+					const prev = prevActive.current;
+					prevActive.current = activeId;
+					if (prev === null || prev === void 0 || prev === activeId) return;
+					try {
+						const host = document.querySelector("[data-vk-area=\"" + area + "\"]");
+						const pane = host === null ? null : host.querySelector("[data-vk-pane=\"" + prev + "\"]");
+						if (pane === null) return;
+						for (const el of Array.from(pane.querySelectorAll("[aria-expanded=\"true\"]"))) {
+							try { el.click(); } catch { /* 该栏目自己处理收起 */ }
+						}
+					} catch { /* 非浏览器环境：跳过 */ }
+				}, [activeId]);
 				if (config.rail === true && wide === false) {
 					return h(VKRail, { panes, activeId, onSelect, onExpand: typeof expandSidebar === "function" ? expandSidebar : null, tail });
 				}
@@ -883,10 +991,49 @@ window.__ModuleLoader__.load({
 			})();
 
 			function vkCurrentSessionId() {
+				const ctx = ctxRef.current;
+				if (ctx === null || ctx === undefined) return "";
+				// ★主口径（对照官方客户端复核，2026-09-29）：中间栏正在显示哪个会话，就是 list 快照里
+				// `retainedBy.mainView > 0` 的那一行 —— 官方 layout / session / workspace / cordis /
+				// settings-general / open-in-app 六处取当前会话用的都是这一句。快照字段只有
+				// { ids, byId, phase, projectionsBySession }，`current` / `currentId` 早就不存在了。
 				try {
-					const snapshot = ctxRef.current.get("sessions").list.getSnapshot();
-					return snapshot !== undefined && snapshot !== null && typeof snapshot.current === "string" ? snapshot.current : "";
-				} catch { return ""; }
+					const byId = ctx.get("sessions").list.getSnapshot().byId;
+					const rows = byId === undefined || byId === null ? [] : Object.keys(byId);
+					for (const id of rows) {
+						const row = byId[id];
+						if (row !== undefined && row !== null && ((row.retainedBy && row.retainedBy.mainView) || 0) > 0) return id;
+					}
+				} catch { /* 落到下面的兜底 */ }
+				// 兜底：旧字段名（1.6 时期这个字段叫 current）
+				//    （拿到空串 → 下段不接 PTY，只显示「正在等待会话…」的兜底），所以名字要挨个试。
+				try {
+					const snap = ctx.get("sessions").list.getSnapshot();
+					if (snap !== null && snap !== undefined) {
+						for (const key of ["current", "currentId", "activeId", "selectedId"]) {
+							const value = snap[key];
+							if (typeof value === "string" && value.length > 0) return value;
+						}
+					}
+				} catch { /* 落到 ② */ }
+				// ② 直接在服务上问（不同版本这层给的方法名不一致）
+				try {
+					const svc = ctx.get("sessions");
+					for (const key of ["current", "currentId", "activeId"]) {
+						if (typeof svc[key] === "function") {
+							const value = svc[key]();
+							if (typeof value === "string" && value.length > 0) return value;
+						}
+					}
+				} catch { /* 落到 ③ */ }
+				// ③ DOM 兜底：官方会话树里被选中的那一行带 data-row-key="session:<id>" + aria-selected="true"
+				try {
+					const row = document.querySelector("[data-row-key^=\"session:\"][aria-selected=\"true\"]")
+						|| document.querySelector("[data-row-key^=\"session:\"][class*=\"_selected\"]");
+					const raw = row === null ? "" : String(row.getAttribute("data-row-key") || "");
+					if (raw.indexOf("session:") === 0) return raw.slice("session:".length);
+				} catch { /* ignore */ }
+				return "";
 			}
 
 			const vkZoomNote = { text: "", store: null, set(text) { this.text = String(text); if (this.store !== null) this.store.setDiag(String(text)); } };
@@ -1276,6 +1423,8 @@ window.__ModuleLoader__.load({
 						// 官方盒子的内联 bottom 原样还回去（换成别的官方盒子了也一样处理）
 						if (panelNudged !== null && panelNudged.el !== null && panelNudged.el !== undefined) {
 							try { panelNudged.el.style.bottom = panelNudged.bottom; } catch { /* ignore */ }
+							try { if (panelNudged.padBottom !== undefined) panelNudged.el.style.paddingBottom = panelNudged.padBottom; } catch { /* ignore */ }
+							try { if (panelNudged.inner !== null && panelNudged.inner !== undefined) panelNudged.inner.style.bottom = panelNudged.innerBottom; } catch { /* ignore */ }
 						}
 						panelNudged = null;
 						splitMode = null;
@@ -1297,10 +1446,78 @@ window.__ModuleLoader__.load({
 				 * 所以这里每次都实读两个 rect：还重叠才动官方盒子（原值留底、拔出还原），并如实报出用的是哪条。
 				 * @param {number} px - 命令行面板高度（px）
 				 */
+				/**
+				 * 官方面板节点：1.7 起同一个文档里可能挂多个 `[data-sidebar-right-panel]`
+				 * （每个会话一个，含 aria-hidden 的隐藏副本），取第一个会量到 0 尺寸的隐藏面板、
+				 * 让位逻辑整段放弃 → 面板满高、下段叠在它上面（用户看到的「遮罩」）。
+				 * 所以按「可见优先」挑：先要那格里的，再要页面上第一个有真实尺寸的。
+				 */
+				const vkCmdFindPanel = () => {
+					const pick = (nodes) => {
+						let fallback = null;
+						for (const node of nodes) {
+							if (node === null || node === undefined) continue;
+							if (node.getAttribute && node.getAttribute("aria-hidden") === "true") continue;
+							let box;
+							try { box = node.getBoundingClientRect(); } catch { continue; }
+							if (box.width > 1 && box.height > 1) return node;
+							if (fallback === null) fallback = node;
+						}
+						return fallback;
+					};
+					try {
+						if (col !== null && col !== undefined && typeof col.querySelectorAll === "function") {
+							const inCol = pick(col.querySelectorAll("[data-sidebar-right-panel]"));
+							if (inCol !== null) return inCol;
+						}
+					} catch { /* 落到全页查找 */ }
+					try { return pick(document.querySelectorAll("[data-sidebar-right-panel]")); } catch { return null; }
+				};
+				/**
+				 * 每帧独立把官方面板压上去（1.7 实测：面板是 absolute 盒子，给那一格 padding 不管用；
+				 * 而 splitCheck 只在挂载路径里跑，`px===0` / col 判空那几条分支会把让位整段跳过）。
+				 * 这里不管 col/挂载状态，只要下段真的占着高度就写官方面板的 bottom（兜不住再补 padding）。
+				 */
+				const vkCmdReserveSpace = (px) => {
+					try {
+						if (px <= 0) return;
+						if (host === null || host.isConnected !== true) return;
+						const panel = vkCmdFindPanel();
+						if (panel === null || panel === undefined) return;
+						// 只在「该写的东西还没写上」时动 DOM：面板本身，以及面板里那层绝对定位的内容层
+						// （只压面板会让内容仍按满高布局 → 上方留空）。每秒无脑写样式是卡顿来源，这里全部前置判断。
+						const want = px + "px";
+						const inner = panel.firstElementChild;
+						const innerAbsolute = inner !== null && inner !== undefined
+							&& (() => { try { const pos = window.getComputedStyle(inner).position; return pos === "absolute" || pos === "fixed"; } catch { return false; } })();
+						const needPanel = panel.style.bottom !== want;
+						const needInner = innerAbsolute && inner.style.bottom !== want;
+						if (needPanel === false && needInner === false) return;
+						if (panelNudged === null) {
+							panelNudged = {
+								el: panel, bottom: panel.style.bottom, padBottom: panel.style.paddingBottom,
+								inner: innerAbsolute ? inner : null, innerBottom: innerAbsolute ? inner.style.bottom : null
+							};
+						}
+						if (needPanel === true) panel.style.bottom = want;
+						if (needInner === true) inner.style.bottom = want;
+						const hr = host.getBoundingClientRect();
+						const pr = panel.getBoundingClientRect();
+						const overlapped = hr.height > 1 && pr.bottom > hr.top + 1;
+						splitMode = overlapped === true ? "panel" : "panel";
+						vkCmdSplitState.mode = splitMode;
+						vkCmdSplitState.overlap = overlapped;
+						vkCmdSplitState.panelH = Math.round(pr.height);
+						vkCmdSplitState.panelBottom = Math.round(pr.bottom);
+						vkCmdSplitState.hostTop = Math.round(hr.top);
+						vkCmdSplitState.gap = Math.round(hr.top - pr.bottom);
+						vkCmdSplitState.touchedOfficial = true;
+					} catch { /* 量不到就什么都不动 */ }
+				};
 				const splitCheck = (px) => {
 					const out = { mode: splitMode === null ? "measuring" : splitMode, gap: null, panelH: null, hostTop: null, panelBottom: null, overlap: null, touchedOfficial: panelNudged !== null, scroller: null, at: Date.now() };
 					try {
-						const panel = document.querySelector("[data-sidebar-right-panel]");
+						const panel = vkCmdFindPanel();
 						if (panel === null || panel === undefined) { Object.assign(vkCmdSplitState, out); return out; }
 						const hr = host.getBoundingClientRect();
 						const pr = panel.getBoundingClientRect();
@@ -1313,7 +1530,7 @@ window.__ModuleLoader__.load({
 						out.overlap = pr.bottom > hr.top + 1 && pr.top < hr.bottom - 1;
 						if (out.overlap === true && splitMode !== "panel") {
 							splitMode = "panel";
-							panelNudged = { el: panel, bottom: panel.style.bottom };
+							panelNudged = { el: panel, bottom: panel.style.bottom, padBottom: panel.style.paddingBottom };
 							panel.style.bottom = px + "px";
 							out.touchedOfficial = true;
 							const p2 = panel.getBoundingClientRect();
@@ -1328,9 +1545,22 @@ window.__ModuleLoader__.load({
 							// 官方盒子被 React 换过节点：旧的还原、新的接上（否则会留下一个多出来的内联 bottom）
 							if (panelNudged !== null && panelNudged.el !== panel) {
 								try { if (panelNudged.el !== null && panelNudged.el !== undefined) panelNudged.el.style.bottom = panelNudged.bottom; } catch { /* ignore */ }
-								panelNudged = { el: panel, bottom: panel.style.bottom };
+								panelNudged = { el: panel, bottom: panel.style.bottom, padBottom: panel.style.paddingBottom };
 							}
 							if (panelNudged !== null && panel.style.bottom !== px + "px") panel.style.bottom = px + "px";
+							// 1.7 兜底：面板高度有时不由 top/bottom 决定（inset 或别的高度规则压着），
+							// 只写 bottom 仍重叠 → 再补一条 padding-bottom 并重新实测，仍重叠就如实报出来。
+							if (out.overlap === true) {
+								try {
+									if (panel.style.paddingBottom !== px + "px") panel.style.paddingBottom = px + "px";
+								} catch { /* ignore */ }
+								const p3 = panel.getBoundingClientRect();
+								out.panelH = Math.round(p3.height);
+								out.panelBottom = Math.round(p3.bottom);
+								out.gap = Math.round(hr.top - p3.bottom);
+								out.overlap = p3.bottom > hr.top + 1 && p3.top < hr.bottom - 1;
+								out.mode = out.overlap === true ? "panel+pad" : "panel";
+							}
 						}
 						out.mode = splitMode === null ? "measuring" : splitMode;
 						out.touchedOfficial = panelNudged !== null;
@@ -1350,6 +1580,7 @@ window.__ModuleLoader__.load({
 					const wantFullscreen = vkCmdFullscreen();
 					if (vkCmdStore.paneFullscreen !== wantFullscreen) vkCmdStore.setPaneFullscreen(wantFullscreen);
 					const px = pxOf();
+					vkCmdReserveSpace(px);
 					if (px === 0) {
 						detach();
 						vkCmdProbe({ inCol: false, pinnedPx: 0, colFound: col !== null, fullscreen: wantFullscreen });
@@ -1634,8 +1865,29 @@ window.__ModuleLoader__.load({
 			 * ctx.theme。服务调用一律在调用点兜错（任何异常都不许冒到渲染期）。
 			 * @returns props 对象；会话还没就绪时返回 null（服务拿不到则返回哑 view，由出题态提示接管）。
 			 */
+			/**
+			 * 终端 props **按 (sid, key) 缓存**（用户 2026-09-29 报「终端栏展开卡顿严重」的根因修复）。
+			 *
+			 * 官方 TerminalBody 的两条 effect 都以 model 为依赖：`useEffect(() => model.mount(), [model])`、
+			 * `useLayoutEffect(..., [model])`（xterm 初始化那条），TerminalScreen 里同样是 `[model]`。
+			 * 而官方 view 对象是**每次取都新建**的（它内部 clone 快照）；我们以前每次渲染都调一次，
+			 * 于是**任何一次重渲染（例如下段每秒的 diag 更新）都会销毁并重建整个 xterm 与全部订阅**，
+			 * 表现就是下段越用越卡、输入延迟。这里让同一个 (sid, key) 永远拿到同一个对象：
+			 * view / store 都走缓存，`mount` 因此只跑一次。
+			 */
+			const vkTermCache = { views: new Map(), props: new Map(), key: "" };
+			function vkTermCacheReset(next) {
+				const k = String(next === null || next === undefined ? "" : next);
+				if (vkTermCache.key === k) return;
+				vkTermCache.key = k;
+				vkTermCache.views.clear();
+				vkTermCache.props.clear();
+			}
 			function vkTerminalProps(entry, sid) {
 				if (sid.length === 0) return null;
+				const cacheKey = sid + "|" + VK_TERM_KEY;
+				const hit = vkTermCache.props.get(cacheKey);
+				if (hit !== void 0) return hit;
 				let svc = null;
 				let svcErr = null;
 				try { svc = ctxRef.current.get("webTerminals"); } catch (error) { svcErr = String(error && error.message ? error.message : error); }
@@ -1644,11 +1896,18 @@ window.__ModuleLoader__.load({
 				/** 调服务取 view；**调用点兜错**（服务侧异常绝不冒到渲染期，否则整棵树被卸载）。 */
 				const callView = (key) => {
 					if (usable !== true) return null;
+					const ck = sid + "|" + String(key);
+					const cached = vkTermCache.views.get(ck);
+					if (cached !== void 0) return cached === null ? null : cached;
 					try {
 						const v = svc.view(sid, key);
-						return v === null || v === void 0 ? null : v;
+						// 快照对象的 state 会随服务内部更新而失效，但对象本身必须稳定（它就是 effect 的依赖）。
+						const kept = v === null || v === void 0 ? null : v;
+						vkTermCache.views.set(ck, kept);
+						return kept;
 					} catch (error) {
 						callErr.error = String(error && error.message ? error.message : error);
+						vkTermCache.views.set(ck, null);
 						return null;
 					}
 				};
@@ -1738,7 +1997,9 @@ window.__ModuleLoader__.load({
 					if (typeof react.useSyncExternalStore !== "function") return cell.snapshot();
 					return react.useSyncExternalStore(cell.subscribe, cell.snapshot);
 				};
-				return { useTabInfo, useTerminal, useTheme, view, t: vkTermText(), probe };
+				const built = { useTabInfo, useTerminal, useTheme, view, t: vkTermText(), probe };
+				vkTermCache.props.set(cacheKey, built);
+				return built;
 			}
 
 			/**
@@ -1805,6 +2066,9 @@ window.__ModuleLoader__.load({
 				react.useEffect(() => {
 					const tick = () => {
 						const next = vkCurrentSessionId();
+						// 缓存按会话作废（换会话要换 view 对象）；同一会话内**绝不**清，否则又回到
+						// 「每次重渲染重建 xterm」的老样子。
+						try { vkTermCacheReset(next); } catch { /* ignore */ }
 						setSid((prev) => (prev === next ? prev : next));
 					};
 					const timer = window.setInterval(tick, VK_CMD_POLL_MS);
@@ -2001,10 +2265,582 @@ window.__ModuleLoader__.load({
 			vkLayoutApply(ctx);
 			try {
 				vkCmdStrip(ctx);
+				try {
+					vkExternalLinks(ctx);
+				} catch (error) {
+					try { ctx.logger.warn("[dsh-vk-layout] 外链收编安装失败：" + String(error)); } catch { /* ignore */ }
+				}
+				try {
+					vkShortcuts(ctx);
+				} catch (error) {
+					try { ctx.logger.warn("[dsh-vk-layout] 快捷键安装失败：" + String(error)); } catch { /* ignore */ }
+				}
+				try {
+					vkHideMnemonEntry(ctx);
+				} catch (error) {
+					try { ctx.logger.warn("[dsh-vk-layout] 记忆系统入口隐藏失败：" + String(error)); } catch { /* ignore */ }
+				}
+				try {
+					vkSettingsTabs(ctx);
+				} catch (error) {
+					try { ctx.logger.warn("[dsh-vk-layout] 通用设置页内 tab 安装失败：" + String(error)); } catch { /* ignore */ }
+				}
 			} catch (error) {
 				try { ctx.logger.warn("[dsh-vk-layout] 下段命令行挂载失败：" + String(error)); } catch { /* ignore */ }
 			}
 		}
+		/* 外链收编：外壳对任何 target=_blank / window.open 一律开悬浮子窗（apps\dsh-desktop 的
+		   NewWindowRequested → OpenChildWindow），逐个插件去改必漏——钱包的充值/API Key、局域网服务
+		   的 3090~3099 列表、官方账号页的链接都走这条路。这里在文档捕获阶段统一接管，全部改走右栏
+		   浏览器面板（我们那只原生 WebView2 子控件）；真要开系统浏览器走 __DSH_OPEN_SYSTEM__，
+		   置 window.__DSH_ALLOW_NATIVE_OPEN__ = true 可临时放行原生 window.open。
+		   放行：带修饰键、右键、已被 preventDefault、非 http(s)、同源且非 _blank、带 data-vk-keep-external。 */
+		const vkExternalLinks = (function () {
+			const EMBED_KIND = "dsh-embedded-browser";
+			const OFFICIAL_BROWSER_KIND = "browser";
+			const EMBED_WAIT_FRAMES = 20;
+			const nativeOpen = typeof window === "undefined" || typeof window.open !== "function" ? null : window.open.bind(window);
+			function paneOpener() {
+				const w = typeof window === "undefined" ? undefined : window;
+				const hook = w === undefined ? undefined : w.__DSH_EMBED_OPEN__;
+				return typeof hook === "function" ? hook : null;
+			}
+			function sidebarRightOf(ctx) {
+				try {
+					const right = ctx === null || ctx === undefined ? null : ctx.get("sidebarRight");
+					return right !== null && right !== undefined && typeof right.openTab === "function" ? right : null;
+				} catch { return null; }
+			}
+			/** openTab 对没注册的类型是抛错、不是返回失败：用它当「这个包在不在」的探针。 */
+			function openTabSafely(right, kind, options) {
+				if (right === null) return false;
+				try { right.openTab(kind, options); return true; } catch { return false; }
+			}
+			/** 右栏被收起时先展开：面板要有落位的那一格（与「新建终端 → 下段」同一口径）。 */
+			function ensureRightBar(ctx) {
+				try {
+					const right = ctx === null || ctx === undefined ? null : ctx.get("sidebarRight");
+					if (right === null || right === undefined) return;
+					if (typeof right.isExpanded === "function" && right.isExpanded() !== true && typeof right.toggleExpanded === "function") right.toggleExpanded();
+				} catch { /* ignore */ }
+			}
+			/**
+			 * 唤起右栏浏览器面板：① 面板已挂着 → 直接导航；② 请右栏开那一格（注册表可能还没就绪，
+			 * 隔 300ms 重试若干次）；③ 面板异步挂载，再等若干帧拿把手；④ 都不通才退官方「浏览器」页。
+			 */
+			function tryEmbed(ctx, url, launchLeft) {
+				const hook = paneOpener();
+				if (hook !== null) {
+					try { hook(url); return true; } catch { /* 落到下面的开栏 */ }
+				}
+				const right = sidebarRightOf(ctx);
+				if (openTabSafely(right, EMBED_KIND) === false) {
+					if (launchLeft > 0) {
+						setTimeout(() => { tryEmbed(ctx, url, launchLeft - 1); }, 300);
+						return false;
+					}
+					openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url: url } });
+					return false;
+				}
+				let left = EMBED_WAIT_FRAMES;
+				const tick = () => {
+					const fn = paneOpener();
+					if (fn !== null) {
+						try { fn(url); } catch { /* ignore */ }
+						return;
+					}
+					left -= 1;
+					if (left > 0) { setTimeout(tick, 150); return; }
+					openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url: url } });
+				};
+				setTimeout(tick, 150);
+				return true;
+			}
+			function openInPane(ctx, url) {
+				ensureRightBar(ctx);
+				return tryEmbed(ctx, url, 8);
+			}
+			function isHttpUrl(url) { return /^https?:\/\//i.test(String(url === null || url === undefined ? "" : url)); }
+			function keepsExternal(node) {
+				let el = node;
+				while (el !== null && el !== undefined && el !== document) {
+					if (el.hasAttribute && el.hasAttribute("data-vk-keep-external")) return true;
+					el = el.parentNode;
+				}
+				return false;
+			}
+			function install(ctx) {
+				const onDocumentClick = (ev) => {
+					try {
+						if (ev.defaultPrevented === true || ev.button !== 0) return;
+						if (ev.metaKey === true || ev.ctrlKey === true || ev.shiftKey === true || ev.altKey === true) return;
+						let node = ev.target;
+						if (node !== null && node !== undefined && node.nodeType === 3) node = node.parentNode;
+						const a = node !== null && node !== undefined && typeof node.closest === "function" ? node.closest("a[href]") : null;
+						if (a === null || a === undefined) return;
+						if (keepsExternal(a)) return;
+						const href = a.href;
+						if (!isHttpUrl(href)) return;
+						const blank = String(a.getAttribute("target") || "").toLowerCase() === "_blank";
+						let cross = true;
+						try { cross = new URL(href, location.href).origin !== location.origin; } catch { /* 判不了就按跨源处理 */ }
+						if (blank === false && cross === false) return;
+						ev.preventDefault();
+						ev.stopPropagation();
+						openInPane(ctx, href);
+					} catch { /* 任何异常都不许影响页面本身 */ }
+				};
+				document.addEventListener("click", onDocumentClick, true);
+				const wrappedOpen = function (url) {
+					if (isHttpUrl(url) && window.__DSH_ALLOW_NATIVE_OPEN__ !== true) {
+						openInPane(ctx, url);
+						return null;
+					}
+					return nativeOpen === null ? null : nativeOpen.apply(window, arguments);
+				};
+				try {
+					globalThis.__DSH_OPEN_SYSTEM__ = function () { return nativeOpen === null ? null : nativeOpen.apply(window, arguments); };
+					if (nativeOpen !== null) window.open = wrappedOpen;
+				} catch { /* ignore */ }
+				let published = null;
+				let publishedPane = null;
+				try {
+					published = (url) => openInPane(ctx, url);
+					globalThis.__DSH_OPEN_EXTERNAL__ = published;
+					publishedPane = (kind) => {
+						ensureRightBar(ctx);
+						return openTabSafely(sidebarRightOf(ctx), kind, {});
+					};
+					globalThis.__DSH_OPEN_PANE__ = publishedPane;
+				} catch { /* ignore */ }
+				ctx.effect(() => () => {
+					try { document.removeEventListener("click", onDocumentClick, true); } catch { /* ignore */ }
+					try { if (nativeOpen !== null && window.open === wrappedOpen) window.open = nativeOpen; } catch { /* ignore */ }
+					try { if (published !== null && globalThis.__DSH_OPEN_EXTERNAL__ === published) delete globalThis.__DSH_OPEN_EXTERNAL__; } catch { /* ignore */ }
+					try { if (publishedPane !== null && globalThis.__DSH_OPEN_PANE__ === publishedPane) delete globalThis.__DSH_OPEN_PANE__; } catch { /* ignore */ }
+				}, "dsh-vk-layout: external links");
+			}
+			return install;
+		})();
+
+		/* 右栏/下段的自研 pane 补快捷键（官方每个入口都有，用户 2026-09-29 要）：
+		   Ctrl+Alt+1 浏览器 / 2 本机文件 / 3 查看器 / 4 命令行下段。
+		   两条路同时装：自家 keydown（保证能用）+ 官方 shortcuts 注册（进「快捷键」清单、可改键）。 */
+		const vkShortcuts = (function () {
+			const ITEMS = [
+				{ id: "vk.pane.browser", code: "Digit1", kind: "dsh-embedded-browser", label: "打开浏览器（右栏）" },
+				{ id: "vk.pane.files", code: "Digit2", kind: "files", label: "打开本机文件（右栏）" },
+				{ id: "vk.pane.viewer", code: "Digit3", kind: "anoslide.view", label: "打开查看器（右栏）" },
+				{ id: "vk.cmdline.toggle", code: "Digit4", kind: null, label: "命令行（下段）" }
+			];
+			const defaultsOf = (code) => {
+				const one = { code: code, modifiers: ["control", "alt"] };
+				return {
+					"desktop:macos": one, "desktop:windows": one, "desktop:linux": one,
+					"web:macos": one, "web:windows": one, "web:linux": one
+				};
+			};
+			function run(item) {
+				if (item.kind === null) {
+					try { if (typeof vkCmdStore.setOpen === "function") vkCmdStore.setOpen(vkCmdStore.open !== true); } catch { /* ignore */ }
+					return;
+				}
+				try {
+					const opener = globalThis.__DSH_OPEN_PANE__;
+					if (typeof opener === "function") opener(item.kind);
+				} catch { /* ignore */ }
+			}
+			function install(ctx) {
+				let last = 0;
+				const keydown = (ev) => {
+					try {
+						// Ctrl+Shift+R（硬刷新）：实测在 window 冒泡阶段会被官方快捷键服务 preventDefault
+						// （见 handoff 记录：捕获阶段干净、冒泡阶段 prevented=true）。浏览器原生刷新于是失效，
+						// 表现为「按了没反应」。这里只在那一下被吃掉时补一次真正的 reload；
+						// 没被吃掉时绝不拦，交给浏览器/WebView2 自己的刷新。
+						if (ev.code === "KeyR" && ev.ctrlKey === true && ev.shiftKey === true && ev.altKey !== true && ev.metaKey !== true) {
+							// 实测：这一下在 window 冒泡阶段会被官方快捷键服务 preventDefault，原生刷新会被吃掉。
+							// 用户口径是「这个键必须能刷新」，所以不再等 defaultPrevented 判断，直接自己刷：
+							// 先挡掉其它处理者的默认动作，再自己 reload（结果与原生刷新一致）。
+							ev.preventDefault();
+							try { window.location.reload(); } catch { /* ignore */ }
+							return;
+						}
+						if (ev.defaultPrevented === true || ev.isComposing === true) return;
+						if (ev.ctrlKey !== true || ev.altKey !== true || ev.shiftKey === true || ev.metaKey === true) return;
+						const item = ITEMS.find((it) => it.code === ev.code);
+						if (item === undefined) return;
+						ev.preventDefault();
+						ev.stopPropagation();
+						const now = Date.now();
+						if (now - last < 300) return;
+						last = now;
+						run(item);
+					} catch { /* ignore */ }
+				};
+				document.addEventListener("keydown", keydown, true);
+				/* 不往官方 shortcuts 服务注册：2026-09-29 实测，注册后用户原有的 Ctrl+Shift+R
+				   等官方快捷键一起失效（服务侧是全局键处理，注册面出问题会连带整条链路）。
+				   改键能力让位给「能用」——键位只走上面那条自家 keydown。 */
+				ctx.effect(() => () => {
+					try { document.removeEventListener("keydown", keydown, true); } catch { /* ignore */ }
+				}, "dsh-vk-layout: shortcuts");
+			}
+			return install;
+		})();
+
+		/* mnemon 自带左栏入口藏掉（按标记与文本打标记，节流重扫，官方重渲染后仍生效）。 */
+		const vkHideMnemonEntry = (function () {
+			/**
+			 * 记忆系统入口：**不论左栏宽窄都要看得见那一颗**（用户口径 2026-09-29/30）。
+			 *
+			 *   · 左栏**展开**（标签行在）：那颗由 `VKTagStrip` 渲染在标签行最右 —— 不论多窄都在。
+			 *   · 左栏**完全收起**（窄轨，我们的 pane 区整块不渲染）：在这里往官方 nav 里补一颗，
+			 *     并且必须**可见**（上一版按"收起不留入口"把它删了，结果用户看到"有按钮、看不见"）。
+			 *
+			 * 另外：官方自带那行 `button[aria-label="记忆系统"]` 一律藏掉（它会把面板开到中栏）。
+			 */
+			/** 窄轨补位图标：挂在官方 nav 里，点它打开 mnemon 自己的面板。 */
+			function ensureRailIcon() {
+				try {
+					const host = document.querySelector("nav[class*=\"panelList\"]");
+					if (host === null || host === void 0) return;
+					if (host.querySelector("[data-vk-mem-rail=\"1\"]") !== null) return;
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.setAttribute("data-vk-mem-rail", "1");
+					btn.className = "vk_railBtn vk_railBtnMem";
+					btn.title = "记忆系统";
+					btn.setAttribute("aria-label", "记忆系统");
+					btn.style.display = "flex";
+					btn.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"12\" cy=\"5\" rx=\"8\" ry=\"3\"></ellipse><path d=\"M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5\"></path><path d=\"M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3\"></path></svg>";
+					btn.addEventListener("click", () => vkActivateMemory());
+					host.appendChild(btn);
+				} catch { /* ignore */ }
+			}
+			function install(ctx) {
+				const mark = () => {
+					try {
+						for (const node of document.querySelectorAll("button,[role=\"tab\"],a")) {
+							if (node.getAttribute("data-vk-mnemon-hidden") === "1") continue;
+							// 我们自己补的那颗（窄轨态）不能被误藏
+							if (node.getAttribute("data-vk-mem-rail") !== null) continue;
+							// 设置中心左栏已不含「记忆系统」（用户口径 2026-09-29：它没有设置分区就不放）
+							if (typeof node.closest === "function" && node.closest(".vkHubNav") !== null) continue;
+							if (String(node.textContent || "").trim() !== "记忆系统") continue;
+							node.setAttribute("data-vk-mnemon-hidden", "1");
+						}
+					} catch { /* ignore */ }
+					// 口径（2026-09-29 定死，不再来回改）：
+					//   展开态 = 标签行在 → 那颗由 VKTagStrip 渲染在标签行最右，可见；
+					//   收起态 = 窄轨，我们的 pane 区不渲染 → **不留记忆入口**（清掉任何补位图标）。
+					try {
+						const expanded = document.querySelector(".vk_tabBar") !== null;
+						if (expanded !== true) {
+							for (const dead of Array.from(document.querySelectorAll("[data-vk-mem-rail=\"1\"]"))) {
+								try { dead.remove(); } catch { /* ignore */ }
+							}
+						}
+					} catch { /* ignore */ }
+				};
+				mark();
+				// 1s 一次：展开/收起切换要跟得上；每次只做两次 querySelector，开销可忽略。
+				const timer = window.setInterval(mark, 1000);
+				ctx.effect(() => () => {
+					try { window.clearInterval(timer); } catch { /* ignore */ }
+				}, "dsh-vk-layout: mnemon entry");
+			}
+			return install;
+		})();
+
+		/* 「通用设置」页内 tab（口径 ③：通用 / Agent 预设 合成一页）。
+		   2026-09-29 重写：以前是把一条 DOM 插进官方正文容器再靠 1.2s 轮询补插，
+		   官方 React 一重渲染就把它冲掉（用户报「切 tab 卡、闪」）。现在照官方「插件」页
+		   自己的做法（settings.plugins.tab）——**注册一个 React 组件进官方 settings.general.item 槽**，
+		   位置、顺序、高亮全由官方排序渲染；我们只负责画 tab 与点它。零 DOM 插入、零轮询。 */
+		const vkSettingsTabs = (function () {
+			const ROWS = [
+				{ id: "general", label: "通用" },
+				{ id: "agent-presets", label: "Agent 预设" }
+			];
+			/** 官方分区按钮：自绘左栏已给它们盖了 data-vk-row 戳（没盖到时退回按文字找）。 */
+			function cellOf(id) {
+				try {
+					const stamped = document.querySelector("button[data-vk-row=\"" + id + "\"]");
+					if (stamped !== null) return stamped;
+					const want = id === "general" ? "通用设置" : "Agent 预设";
+					for (const b of Array.from(document.querySelectorAll("[role=dialog] nav button"))) {
+						if (String(b.textContent || "").trim() === want) return b;
+					}
+				} catch { /* ignore */ }
+				return null;
+			}
+			function activeCell() {
+				try {
+					const on = document.querySelector("[role=dialog] nav button[aria-current=\"true\"]");
+					if (on === null) return null;
+					const id = on.getAttribute("data-vk-row");
+					if (id === "general" || id === "agent-presets") return id;
+					const txt = String(on.textContent || "").trim();
+					if (txt === "通用设置") return "general";
+					if (txt === "Agent 预设") return "agent-presets";
+				} catch { /* ignore */ }
+				return null;
+			}
+			/**
+			 * 设置页内 tab（通用 / Agent 预设）——**照抄官方「插件」页那条 tab**。
+			 *
+			 * 官方那条在 `@deepseek-ai/dsh-client-ui-settings-plugins` 的 `PluginsSettingsSection`：
+			 *   · 容器 `className = pbvGtq_tabs`，`role="tablist"`，`aria-label`
+			 *   · 每个 tab `className = pbvGtq_tab`，`data-active={selected}`、`aria-selected`、
+			 *     `tabIndex = selected ? 0 : -1`、`id`/`aria-controls`
+			 *   · 下划线是 CSS `.pbvGtq_tab[data-active=true]:after` 画的，不是我们的类
+			 *   · 键盘 ←/→/Home/End 换选并 focus 到下一个 tab
+			 * 这里逐项照抄，连类名都用官方的（官方那支 CSS 已经注入在 <head>，不必再抄一份）。
+			 * 我们只多一件事：选中时切到对应的官方分区（它俩是官方两个独立分区，这点绕不开）。
+			 */
+			const TABS_CLASS = "pbvGtq_tabs";
+			const TAB_CLASS = "pbvGtq_tab";
+			/** 当前设置分区（general / agent-presets …）；不在官方 nav 里时给 null。 */
+			function useVKActiveSection() {
+				const [active, setActive] = react.useState(activeCell);
+				react.useEffect(() => {
+					const sync = () => {
+						const next = activeCell();
+						setActive((prev) => (prev === next ? prev : next));
+					};
+					sync();
+					/* 官方切分区会重建 nav；用只查 nav 那一格的小轮询同步高亮。
+					   曾经这里是 document.body 上的 subtree MutationObserver（连 class 属性一起看），
+					   流式输出时每个 token 都触发一遍 —— 就是用户报的「设置页卡」的一半原因。 */
+					const timer = window.setInterval(sync, 300);
+					return () => { try { window.clearInterval(timer); } catch { /* ignore */ } };
+				}, []);
+				return [active, setActive];
+			}
+			/** tab 本体：两个槽位共用同一份渲染，active / onPick 由外层给。 */
+			function VKSettingsTabRowBody(props) {
+				const active = props === undefined || props === null ? null : props.active;
+				const onPick = props === undefined || props === null ? null : props.onPick;
+				const refs = react.useRef([]);
+				return h("div", { className: TABS_CLASS, role: "tablist", "aria-label": "设置视图" },
+					ROWS.map((row, index) => h("button", {
+						key: row.id,
+						ref: (el) => { refs.current[index] = el; },
+						type: "button",
+						role: "tab",
+						"aria-selected": active === row.id,
+						"data-active": active === row.id ? "true" : void 0,
+						tabIndex: active === row.id ? 0 : -1,
+						className: TAB_CLASS,
+						onClick: () => { if (typeof onPick === "function") onPick(row.id); },
+						onKeyDown: (event) => {
+							let nextIndex;
+							if (event.key === "ArrowRight") nextIndex = (index + 1) % ROWS.length;
+							else if (event.key === "ArrowLeft") nextIndex = (index - 1 + ROWS.length) % ROWS.length;
+							else if (event.key === "Home") nextIndex = 0;
+							else if (event.key === "End") nextIndex = ROWS.length - 1;
+							else return;
+							event.preventDefault();
+							if (typeof onPick === "function") onPick(ROWS[nextIndex].id);
+							const target = refs.current[nextIndex];
+							if (target !== null && target !== void 0 && typeof target.focus === "function") target.focus();
+						}
+					}, row.label)));
+			}
+			/** 正文顶部那一份（挂 settings.general.item）：切到别的分区就不该看见这条 tab。 */
+			function VKSettingsTabRow() {
+				const [active, setActive] = useVKActiveSection();
+				if (active === null) return null;
+				return h(VKSettingsTabRowBody, { active: active, onPick: (id) => {
+					const cell = cellOf(id);
+					if (cell !== null) { try { cell.click(); } catch { /* ignore */ } }
+					setActive(id);
+				} });
+			}
+			/**
+			 * 「Agent 预设」分区里那条 tab —— 用**挂在 document.body 上的浮层**做。
+			 *
+			 * 官方只给 general 那一节开了 item 槽（`settings.general.item`，硬编码在
+			 * dsh-client-ui-settings-general 的 renderSlot 里）；「Agent 预设」是另一个独立
+			 * settings.section，正文里没有可注入的槽。
+			 *
+			 * 为什么不把节点插进正文里（前一版就是这么做的，用户看到「闪一下」）：React 提交时会清掉
+			 * 它管的容器里的外来节点（实测插进去 300~400ms 后节点已不在 DOM），只能等下一拍补插 ——
+			 * 那一拍就是用户看到的闪，而补插本身还会和 React 的提交互相触发。
+			 * 挂到 body 上的外来节点 React 不动，于是**一次都不用补插**。
+			 *
+			 * 位置：先给分区正文根用 inline padding 预留出这一行的高度（React 不接管这一格的 padding，
+			 * 所以预留不会塌），浮层就摆在那块空位上；类名、CSS 与「通用」页那条完全相同。
+			 */
+			/** 正文顶部那条 tab 占的高度：本体 37 + 自带的 2px 上边距。 */
+			const VK_TABS_RESERVE = 39;
+			const VK_TABS_RESERVE_ATTR = "data-vk-tabs-reserve";
+			const VK_TABS_RESERVE_PREV = "data-vk-tabs-reserve-prev";
+			/** 预留 / 释放正文顶部的空位（幂等；原值记在属性里，释放时还原）。 */
+			function vkReserveForTabs(root) {
+				if (root === null || root === void 0) return;
+				if (root.getAttribute(VK_TABS_RESERVE_ATTR) === "1") return;
+				try {
+					root.setAttribute(VK_TABS_RESERVE_PREV, String(root.style.paddingTop || ""));
+					root.style.paddingTop = VK_TABS_RESERVE + "px";
+					root.setAttribute(VK_TABS_RESERVE_ATTR, "1");
+				} catch { /* ignore */ }
+			}
+			function vkReleaseReserve() {
+				try {
+					for (const root of Array.from(document.querySelectorAll("[" + VK_TABS_RESERVE_ATTR + "]"))) {
+						root.style.paddingTop = root.getAttribute(VK_TABS_RESERVE_PREV) || "";
+						root.removeAttribute(VK_TABS_RESERVE_ATTR);
+						root.removeAttribute(VK_TABS_RESERVE_PREV);
+					}
+				} catch { /* ignore */ }
+			}
+			const VK_TABS_INJECT = "data-vk-tabs-injected";
+			/** 承载当前分区的容器（结构定位，不写死官方类名哈希）。 */
+			function vkSettingsOptions() {
+				try {
+					const dialog = document.querySelector("[role=dialog]");
+					const content = dialog === null ? null : dialog.lastElementChild;
+					if (content === null) return null;
+					const options = content.lastElementChild;
+					return options === null || options === content ? null : options;
+				} catch { return null; }
+			}
+			/** 当前分区正文的根盒（用来量位置、预留空位；不往里插任何节点）。 */
+			function vkSettingsSectionBody() {
+				try {
+					const slot = document.querySelector("[data-slot=\"settings.section\"]");
+					return slot === null ? null : slot.firstElementChild;
+				} catch { return null; }
+			}
+			function vkInjectedTabs() {
+				try { return document.querySelector("[" + VK_TABS_INJECT + "]"); } catch { return null; }
+			}
+			function vkSyncInjectedTabs(wrap) {
+				const active = activeCell();
+				for (const b of Array.from(wrap.children)) {
+					const on = b.getAttribute("data-vk-tab-id") === active;
+					b.setAttribute("aria-selected", on ? "true" : "false");
+					b.setAttribute("tabindex", on ? "0" : "-1");
+					if (on) b.setAttribute("data-active", "true"); else b.removeAttribute("data-active");
+				}
+			}
+			/** 浮层本体：外层是我们自己的 fixed 宿主，里面就是那条 tab（类名与官方「插件」页一致）。 */
+			function vkBuildInjectedTabs() {
+				const host = document.createElement("div");
+				host.setAttribute(VK_TABS_INJECT, "1");
+				host.style.cssText = "position:fixed;z-index:2147483000;display:none";
+				const wrap = document.createElement("div");
+				wrap.className = TABS_CLASS;
+				wrap.setAttribute("role", "tablist");
+				wrap.setAttribute("aria-label", "设置视图");
+				for (const row of ROWS) {
+					const b = document.createElement("button");
+					b.type = "button";
+					b.className = TAB_CLASS;
+					b.setAttribute("role", "tab");
+					b.setAttribute("data-vk-tab-id", row.id);
+					b.textContent = row.label;
+					b.addEventListener("click", () => {
+						const cell = cellOf(row.id);
+						if (cell !== null) { try { cell.click(); } catch { /* ignore */ } }
+						vkSyncInjectedTabs(wrap);
+					});
+					wrap.appendChild(b);
+				}
+				host.appendChild(wrap);
+				vkSyncInjectedTabs(wrap);
+				return host;
+			}
+			/** 幂等：算出现在该不该有这条 tab、该在哪，然后摆上去（只动 body 上我们自己的宿主）。 */
+			function vkPlaceInjectedTabs() {
+				const host = vkInjectedTabs();
+				const body = activeCell() === "agent-presets" ? vkSettingsSectionBody() : null;
+				if (body === null) {
+					vkReleaseReserve();
+					if (host !== null) { try { host.remove(); } catch { /* ignore */ } }
+					return;
+				}
+				vkReserveForTabs(body);
+				let node = host;
+				if (node === null) {
+					try { node = vkBuildInjectedTabs(); document.body.appendChild(node); } catch { return; }
+				}
+				const rect = body.getBoundingClientRect();
+				node.style.display = "block";
+				node.style.left = Math.round(rect.left) + "px";
+				node.style.top = Math.round(rect.top) + "px";
+				node.style.width = Math.round(rect.width) + "px";
+				const wrap = node.firstElementChild;
+				if (wrap !== null) vkSyncInjectedTabs(wrap);
+			}
+			function vkInstallInjectedTabs(ctx) {
+				let timer = null;
+				let obs = null;
+				let watched = null;
+				let raf = 0;
+				/** 滚动 / 改尺寸时重算位置（rAF 节流，避免每帧多次 getBoundingClientRect）。 */
+				const later = () => {
+					if (raf !== 0) return;
+					try {
+						raf = window.requestAnimationFrame(() => { raf = 0; try { vkPlaceInjectedTabs(); } catch { /* ignore */ } });
+					} catch { raf = 0; vkPlaceInjectedTabs(); }
+				};
+				/**
+				 * 进对话框就把观察器挂上（不等切到 Agent 预设）。
+				 *
+				 * 挂在哪很关键——实测（克隆，点击「Agent 预设」后 400ms 计数）：
+				 *   · 承载分区的容器 `.options` 的**直接孩子一个都没变**（childList 命中 0 次）；
+				 *   · 变的是**分区槽** `[data-slot=settings.section]` 的直接孩子（命中 1 次，点击后 **2ms**），
+				 *     槽元素本身跨分区复用（同一元素、同一父节点）。
+				 * 所以必须盯**槽**：盯错了就永远不触发，只能等 400ms 兜底那一拍补上——那正是用户看到的闪。
+				 * 观察器**只读** React 的 DOM（真正插入的浮层在 body 上），不会和 React 互相触发；
+				 * 只挂 childList，不碰属性、不做 subtree。
+				 */
+				const attach = (target) => {
+					if (obs !== null) { try { obs.disconnect(); } catch { /* ignore */ } }
+					watched = target;
+					if (target === null) { obs = null; return; }
+					try {
+						obs = new MutationObserver(() => { vkPlaceInjectedTabs(); });
+						obs.observe(target, { childList: true });
+					} catch { obs = null; }
+				};
+				const pump = () => {
+					if (vkSettingsOptions() === null) { attach(null); vkPlaceInjectedTabs(); return; }
+					const slot = document.querySelector("[data-slot=\"settings.section\"]");
+					const target = slot !== null && slot.isConnected === true ? slot : null;
+					if (watched !== target || (watched !== null && watched.isConnected !== true)) attach(target);
+					vkPlaceInjectedTabs();
+				};
+				try { timer = window.setInterval(pump, 400); pump(); } catch { /* 无定时器环境：放弃 */ }
+				try {
+					document.addEventListener("scroll", later, true);
+					window.addEventListener("resize", later);
+				} catch { /* ignore */ }
+				ctx.effect(() => () => {
+					try { window.clearInterval(timer); } catch { /* ignore */ }
+					if (obs !== null) { try { obs.disconnect(); } catch { /* ignore */ } }
+					try { document.removeEventListener("scroll", later, true); } catch { /* ignore */ }
+					try { window.removeEventListener("resize", later); } catch { /* ignore */ }
+					vkReleaseReserve();
+					const dead = vkInjectedTabs();
+					if (dead !== null) { try { dead.remove(); } catch { /* ignore */ } }
+				}, "dsh-vk-layout: settings tabs overlay");
+			}
+			function install(ctx) {
+				ctx.slots.inject("settings.general.item", () => ctx.slots.register({
+					name: "settings.general.item",
+					id: "vk-general-tabs",
+					order: -100,
+					locale: "common"
+				}, VKSettingsTabRow));
+				vkInstallInjectedTabs(ctx);
+			}
+			return install;
+		})();
+
 		exports.apply = apply;
 		exports.inject = ["slots"];
 		exports.VIcon = VIcon;

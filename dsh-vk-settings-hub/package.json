@@ -1,17 +1,25 @@
 {
   "name": "dsh-vk-settings-hub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "设置页导航中枢：接管官方设置左栏，正文仍由官方 shell 渲染。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
-    ".": { "default": "./lib/index.js" },
-    "./client": { "default": "./lib/client.js" },
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -20,5 +28,15 @@
     "lib",
     "cordis.patch.yml"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "author": "Ln1m (https://github.com/Ln1m)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ln1m/dsh-vk-suite.git",
+    "directory": "dsh-vk-settings-hub"
+  },
+  "homepage": "https://github.com/Ln1m/dsh-vk-suite/tree/main/dsh-vk-settings-hub#readme",
+  "bugs": {
+    "url": "https://github.com/Ln1m/dsh-vk-suite/issues"
+  }
 }

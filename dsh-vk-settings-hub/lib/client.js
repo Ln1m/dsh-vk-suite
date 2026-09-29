@@ -22,7 +22,6 @@ window.__ModuleLoader__.load({
 			models: '<rect x="7" y="7" width="10" height="10" rx="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/>',
 			plugins: '<path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/>',
 			skills: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/>',
-			mnemon: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6"/><path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3"/>',
 			archived: '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/>',
 			mcp: '<circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 6h8M7.4 7.7 10.8 16M16.6 7.7 13.2 16"/>',
 			pocket: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
@@ -38,9 +37,11 @@ window.__ModuleLoader__.load({
 			{ id: 'models', label: '模型', glyph: 'models' },
 			{ id: 'plugins', label: '插件', glyph: 'plugins' },
 			{ id: 'skills', label: 'Skill 管理', glyph: 'skills' },
-			{ id: 'mnemon', label: '记忆系统', glyph: 'mnemon' },
-			{ id: 'archived-sessions', label: '已归档会话', glyph: 'archived', subs: [{ id: 'archived-sessions', label: '软归档' }, { id: 'archive-zip', label: 'ZIP 归档' }] },
+			/* 已归档会话：1.7 没有官方软归档分区，只剩我们的 ZIP 页 → 不再分「软归档 / ZIP归档」两级 */
+			{ id: 'archive-zip', label: '已归档会话', glyph: 'archived' },
 			{ id: 'mcp', label: 'MCP 管理', glyph: 'mcp' },
+			/* 记忆系统不进设置页（用户口径 2026-09-29）：mnemon 自己没有设置分区，
+			   以前这里那一条点了只会把它的面板开到中栏，不如不放。 */
 			{ id: 'pocket', label: '移动端访问', glyph: 'pocket', reserved: true },
 			{ id: 'skill-sets', label: '技能档', glyph: 'skillSets', reserved: true },
 			/* 契约里的预留座：谁往 vk.settings.extra 投内容，这里就出现「扩展」 */
@@ -90,6 +91,25 @@ window.__ModuleLoader__.load({
 .vkHubMsgErr{color:#f14c4c}
 .vkHubDot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--dsw-alias-label-tertiary)}
 .vkHubDotOn{background:#73c991}
+.vkHubDotErr{background:#f14c4c}
+.vkHubChips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.vkHubChip{flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;line-height:16px;padding:0 6px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary)}
+.vkHubChipDanger{color:#f14c4c;border-color:rgba(241,76,76,.35)}
+.vkHubChipAccent{color:var(--dsw-alias-state-business-primary);border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary) 35%,transparent)}
+.vkHubSort{flex:none;display:flex;align-items:center;gap:4px}
+.vkHubMore{font-size:11.5px;color:var(--dsw-alias-label-tertiary);padding:2px 0;text-align:center}
+.vkHubRowOpen{cursor:pointer}
+.vkHubDetail{border:1px solid var(--dsw-alias-border-l1);border-top:none;border-radius:0 0 8px 8px;padding:10px 12px;background:var(--dsw-specific-sidebar-fill);display:flex;flex-direction:column;gap:8px}
+.vkHubDetailRow{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);align-items:baseline}
+.vkHubDetailKey{color:var(--dsw-alias-label-tertiary)}
+.vkHubDesc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-primary)}
+.vkHubDescEn{font-size:11.5px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
+.vkHubRed{font-size:11.5px;line-height:17px;color:#f14c4c}
+.vkHubShots{display:flex;gap:8px;flex-wrap:wrap}
+.vkHubShot{height:96px;max-width:220px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);cursor:pointer;object-fit:cover}
+.vkHubGroup{display:flex;align-items:center;gap:8px;padding:2px 2px;cursor:pointer;color:var(--dsw-alias-label-secondary);font-size:12px}
+.vkHubGroup:hover{color:var(--dsw-alias-label-primary)}
+.vkHubGroupN{font-variant-numeric:tabular-nums;color:var(--dsw-alias-label-tertiary)}
 `;
 		(function injectCss() {
 			if (typeof document === 'undefined') return;
@@ -207,7 +227,25 @@ window.__ModuleLoader__.load({
 			for (const btn of Array.from(list.children)) {
 				if (btn.getAttribute('data-vk-row') === id) { found = btn; break; }
 			}
-			if (found === null) { dom.pending = id; scheduleFrame(); return false; }
+			if (found === null) {
+				// 官方没有这一页（例如 1.7 里连「已归档会话」的软归档分区都不在了）：
+				// 落到它存在的子页（ZIP 归档）。不这么做就只会空转重试，用户看到的是「打不开还卡」。
+				const model = NAV_MODEL.find((item) => item.id === id);
+				if (model !== undefined && Array.isArray(model.subs)) {
+					for (const sub of model.subs) {
+						if (sub.id === id) continue;
+						const subBtn = Array.from(list.children).find((b) => b.getAttribute('data-vk-row') === sub.id);
+						if (subBtn !== undefined) {
+							dom.want = sub.id;
+							subBtn.click();
+							paint();
+							scheduleFrame();
+							return true;
+						}
+					}
+				}
+				dom.pending = id; scheduleFrame(); return false;
+			}
 			dom.want = id;
 			found.click();
 			paint();
@@ -226,7 +264,7 @@ window.__ModuleLoader__.load({
 					dom.pending = null;
 					dom.tries += 1;
 					if (select(pending)) dom.tries = 0;
-					else if (dom.tries <= 40) dom.pending = pending;
+					else if (dom.tries <= 8) dom.pending = pending;
 					else dom.tries = 0;
 				}
 				try { paint(); } catch { /* ignore */ }
@@ -249,12 +287,15 @@ window.__ModuleLoader__.load({
 			const active = dom.want !== null ? dom.want : activeId();
 			box.textContent = '';
 
-			const model = NAV_MODEL.filter((item) => present.has(item.id) || (item.subs !== undefined && item.subs.some((s) => present.has(s.id))));
+			const model = NAV_MODEL.filter((item) => present.has(item.id) || item.reserved === true || (item.subs !== undefined && item.subs.some((s) => present.has(s.id))));
 			const known = new Set();
 			for (const item of model) {
 				known.add(item.id);
 				if (item.subs !== undefined) for (const sub of item.subs) known.add(sub.id);
 			}
+			// 1.7 已经没有官方的「软归档」分区（只剩我们的 ZIP 页）：万一还有残留行，
+			// 折进「已归档会话」这一项里，不要在左栏多出一行裸 id。
+			known.add('archived-sessions');
 			/* 契约表之外、由其它插件注册的分区自动落到预留分组（不写死名单，用注册方自己的标签） */
 			const extra = rows.filter((r) => r.id !== HUB_ID && !known.has(r.id) && !RESERVED.includes(r.id)).map((r) => ({ id: r.id, label: r.label || r.id, glyph: 'extra', reserved: true }));
 			const items = model.concat(extra);
@@ -284,7 +325,9 @@ window.__ModuleLoader__.load({
 				text.textContent = item.label;
 				btn.appendChild(glyph);
 				btn.appendChild(text);
-				btn.addEventListener('click', () => { select(item.id); });
+				btn.addEventListener('click', () => {
+					select(item.id);
+				});
 				box.appendChild(btn);
 				if (item.subs !== undefined && on) {
 					for (const sub of item.subs) {
@@ -339,13 +382,20 @@ window.__ModuleLoader__.load({
 			dom.nav = null;
 		}
 
-		/* ── 设置页正文：插件市场 / 启停管理 / ZIP 归档 ── */
+		/* ── 设置页正文：插件市场 / 全局启停 / ZIP 归档 ── */
 		const UI = {
 			refresh: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
 			search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
 			install: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
 			power: '<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>',
-			restore: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'
+			restore: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+			star: '<path d="m12 3 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/>',
+			clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+			asc: '<path d="M12 19V5"/><path d="m6 11 6-6 6 6"/>',
+			desc: '<path d="M12 5v14"/><path d="m6 13 6 6 6-6"/>',
+			copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+			repo: '<path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+			warn: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>'
 		};
 		function HubIcon({ name, size }) {
 			const d = UI[name];
@@ -364,23 +414,104 @@ window.__ModuleLoader__.load({
 			if (msg === null) return h('div', { className: 'vkHubMsg' });
 			return h('div', { className: 'vkHubMsg' + (msg.ok ? ' vkHubMsgOk' : ' vkHubMsgErr') }, msg.text);
 		}
+		function HubChip({ text, tone, title }) {
+			const cls = 'vkHubChip' + (tone === 'danger' ? ' vkHubChipDanger' : tone === 'accent' ? ' vkHubChipAccent' : '');
+			return h('span', { className: cls, title: title === undefined ? text : title }, text);
+		}
+		function copyText(text) {
+			const clip = typeof navigator === 'undefined' ? undefined : navigator.clipboard;
+			if (clip === undefined || clip === null || typeof clip.writeText !== 'function') return Promise.reject(new Error('剪贴板不可用'));
+			return clip.writeText(text);
+		}
+		/** 官方 moduleShortName 的同一条规则（@scope/ 与 cordis-plugin- / dsh- 前缀都剥掉）。 */
+		function moduleShortName(moduleName) {
+			const name = String(moduleName || '');
+			const base = name.indexOf('@') === 0 ? name.slice(name.indexOf('/') + 1) : name;
+			return base.replace(/^cordis:/, '').replace(/^cordis-plugin-/, '').replace(/^dsh-(?:host-|client-)?/, '') || name;
+		}
 		function hubPost(path, payload) {
 			return fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).then((r) => r.json());
 		}
 
+		/* 外链的去处按可用性排，一律不弹外壳悬浮窗：
+		   ① 我们那只右栏浏览器（dsh-embedded-browser）——面板挂载期间留了全局把手，拿到就直接导航
+		      （它是外壳的原生 WebView2 子控件，github 这类 X-Frame-Options 禁 iframe 的站也只有它能开）；
+		   ② 面板没挂着就请右栏把那一页打开，再多等几帧（面板是异步挂载的）；
+		   ③ 我们的包不在（openTab 会抛「没有类型认领」）→ 走官方「浏览器」页
+		      ——@deepseek-ai/dsh-client-ui-sidebar-browser，kind=browser，初始地址从 tab.navigation.params.url 进；
+		   ④ 三条都不通才什么都不开，调用方把地址留在详情里让人自己复制。 */
+		const EMBED_KIND = 'dsh-embedded-browser';
+		const OFFICIAL_BROWSER_KIND = 'browser';
+		const EMBED_WAIT_FRAMES = 20;
+		function paneOpener() {
+			const w = typeof window === 'undefined' ? undefined : window;
+			const hook = w === undefined ? undefined : w.__DSH_EMBED_OPEN__;
+			return typeof hook === 'function' ? hook : null;
+		}
+		function sidebarRight() {
+			try {
+				const ctx = ctxRef.current;
+				const right = ctx === null || ctx === undefined ? null : ctx.get('sidebarRight');
+				return right !== null && right !== undefined && typeof right.openTab === 'function' ? right : null;
+			} catch { return null; }
+		}
+		/** openTab 对没注册的类型是抛错，不是返回失败：用它当「这个包在不在」的探针。 */
+		function openTabSafely(right, kind, options) {
+			if (right === null) return false;
+			try { right.openTab(kind, options); return true; } catch { return false; }
+		}
+		function openInPane(url) {
+			const hook = paneOpener();
+			if (hook !== null) {
+				try { hook(url); return Promise.resolve(true); } catch { /* 落到下面的等待 */ }
+			}
+			const right = sidebarRight();
+			if (!openTabSafely(right, EMBED_KIND)) {
+				return Promise.resolve(openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url } }));
+			}
+			return new Promise((resolve) => {
+				let left = EMBED_WAIT_FRAMES;
+				const tick = () => {
+					const fn = paneOpener();
+					if (fn !== null) {
+						try { fn(url); resolve(true); } catch { resolve(false); }
+						return;
+					}
+					left -= 1;
+					if (left > 0) { setTimeout(tick, 150); return; }
+					resolve(openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url } }));
+				};
+				setTimeout(tick, 150);
+			});
+		}
+
+		/* 清单实测字段（2026-09-29，4382 条）：{name, owner, url, page, category, description:{en,zh}, npm, version,
+		   stars, downloads, added, capabilities, capabilityRedLines, install, tarball}——没有 spec，没有更新时间戳
+		   （只有收录日期 added），description 是对象。 */
+		const MARKET_SORTS = [
+			{ key: 'stars', glyph: 'star', label: '星标' },
+			{ key: 'downloads', glyph: 'install', label: '下载' },
+			{ key: 'installs', glyph: 'boost', label: '安装数' },
+			{ key: 'updated', glyph: 'clock', label: '更新' }
+		];
+		/* 4382 行一次性铺进 DOM 会把设置面板拖住：只画前 200 行，其余靠搜索缩。 */
+		const MARKET_MAX_ROWS = 200;
+
 		/** 插件市场：清单来自 host 侧转发（外网），装走 dsh plugin add。 */
 		function VKMarketTab() {
-			const [state, setState] = react.useState({ phase: 'loading', plugins: [], error: null, fetchedAt: null, cached: false, refreshing: false });
+			const [state, setState] = react.useState({ phase: 'loading', plugins: [], error: null, fetchedAt: null, cached: false, refreshing: false, sources: [], categories: {} });
 			const [query, setQuery] = react.useState('');
 			const [busy, setBusy] = react.useState('');
 			const [msg, setMsg] = react.useState(null);
+			const [sort, setSort] = react.useState({ key: null, dir: 'desc' });
+			const [openKey, setOpenKey] = react.useState('');
 			const load = react.useCallback(() => {
 				/* 加载时不丢已有清单：host 侧有缓存时是秒回，出错也还能看旧的 */
 				setState((prev) => Object.assign({}, prev, { phase: 'loading', error: null }));
 				fetch('/dsh-hub/market').then((r) => r.json())
 					.then((d) => {
 						if (d && d.ok === true) {
-							setState({ phase: 'ready', plugins: d.plugins, error: d.error || null, fetchedAt: d.fetchedAt || null, cached: d.cached === true, refreshing: d.refreshing === true });
+							setState({ phase: 'ready', plugins: d.plugins, error: d.error || null, fetchedAt: d.fetchedAt || null, cached: d.cached === true, refreshing: d.refreshing === true, sources: Array.isArray(d.sources) ? d.sources : [], categories: d.categories === undefined || d.categories === null ? {} : d.categories });
 						} else {
 							setState((prev) => Object.assign({}, prev, { phase: 'error', error: (d && d.error) || '市场清单读不到' }));
 						}
@@ -390,9 +521,9 @@ window.__ModuleLoader__.load({
 			react.useEffect(load, [load]);
 			/* 清单 4000+ 条、5MB：把「多少条 / 什么时候拿的 / 是否在后台刷新」摆在标题行上，
 			   免得用户以为页面坏了（首拉要几十秒是清单体积决定的，不是网络挂了） */
-			const metaText = () => {
+			const metaText = (matched) => {
 				if (state.phase === 'loading' && state.plugins.length === 0) return '拉取中（首次要几十秒）';
-				const parts = [state.plugins.length + ' 条'];
+				const parts = [matched === state.plugins.length ? state.plugins.length + ' 条' : '匹配 ' + matched + ' / ' + state.plugins.length];
 				if (state.fetchedAt !== null) {
 					const t = new Date(state.fetchedAt);
 					parts.push((state.cached ? '缓存 ' : '更新 ') + (Number.isNaN(t.getTime()) ? state.fetchedAt : String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0')));
@@ -400,18 +531,32 @@ window.__ModuleLoader__.load({
 				if (state.refreshing) parts.push('后台刷新中');
 				return parts.join(' · ');
 			};
-			/* 清单条目的字段实测是 {name, owner, url, page, category, description, npm, version, stars, downloads,
-			   capabilities}——没有 spec，而且 description 是 {en, zh} 对象（直接 String() 会渲染成 [object Object]）。
-			   安装源：有 npm 包名走注册表；只有仓库 URL 时补 git+ 前缀，否则 pnpm 认不出这个 spec。 */
+			/* 安装源取清单自己那条 install 命令的末段（4382/4382 都有，是站点维护的规范写法）：
+			   `dsh plugin --profile web add <spec>`，其中 228 条的 URL 带一层引号要剥掉。
+			   npm 只在 install 缺失时兜底。 */
+			const unquote = (t) => {
+				const a = t.charAt(0);
+				return t.length >= 2 && (a === '"' || a === "'") && t.charAt(t.length - 1) === a ? t.slice(1, -1) : t;
+			};
 			const specOf = (p) => {
+				if (typeof p.install === 'string' && p.install.trim().length > 0) {
+					const m = /\s(\S+)\s*$/.exec(p.install.trim());
+					if (m !== null) return unquote(m[1]);
+				}
 				if (typeof p.npm === 'string' && p.npm.length > 0) return p.npm;
-				for (const key of ['spec', 'install', 'source', 'repo', 'repository']) {
+				if (typeof p.tarball === 'string' && p.tarball.length > 0) return p.tarball;
+				for (const key of ['spec', 'source', 'repo', 'repository']) {
 					if (typeof p[key] === 'string' && p[key].length > 0) return p[key];
 				}
 				const url = String(p.url || '');
 				if (url.length === 0) return '';
 				if ((url.indexOf('github.com/') >= 0 || url.indexOf('gitlab.com/') >= 0) && url.indexOf('git+') !== 0) return 'git+' + url;
 				return url;
+			};
+			const commandOf = (p) => {
+				if (typeof p.install === 'string' && p.install.trim().length > 0) return p.install.trim();
+				const spec = specOf(p);
+				return spec.length === 0 ? '' : 'dsh plugin --profile web add ' + spec;
 			};
 			const nameOf = (p) => String(p.name || p.title || p.id || p.package || '');
 			const descOf = (p) => {
@@ -426,10 +571,13 @@ window.__ModuleLoader__.load({
 				if (typeof p.version === 'string' && p.version.length > 0) parts.push('v' + p.version);
 				if (typeof p.stars === 'number') parts.push('★' + p.stars);
 				if (typeof p.downloads === 'number' && p.downloads > 0) parts.push('↓' + p.downloads);
+				if (typeof p.added === 'string' && p.added.length > 0) parts.push('收录 ' + p.added);
 				const d = descOf(p);
 				if (d.length > 0) parts.push(d);
 				return parts.join(' · ');
 			};
+			const capsOf = (p) => (Array.isArray(p.capabilities) ? p.capabilities.filter((c) => typeof c === 'string' && c.length > 0) : []);
+			const redsOf = (p) => (Array.isArray(p.capabilityRedLines) ? p.capabilityRedLines.filter((c) => typeof c === 'string' && c.length > 0) : []);
 			const install = (spec) => {
 				setBusy(spec);
 				setMsg(null);
@@ -443,44 +591,160 @@ window.__ModuleLoader__.load({
 			};
 			const q = query.trim().toLowerCase();
 			const hayOf = (p) => (nameOf(p) + ' ' + descOf(p) + ' ' + String(p.owner || '') + ' ' + String(p.category || '')).toLowerCase();
-			const list = state.plugins.filter((p) => q.length === 0 || hayOf(p).includes(q));
+			const matched = state.plugins.filter((p) => q.length === 0 || hayOf(p).includes(q));
+			const metricOf = (p, key) => (p.metrics === undefined || p.metrics === null ? null : p.metrics[key]);
+			const sortValueOf = (p, key) => {
+				if (key === 'installs') { const v = metricOf(p, 'installs'); return typeof v === 'number' ? v : -1; }
+				if (key === 'updated') { const v = metricOf(p, 'updatedAt'); return v === null || v === undefined ? String(p.added || '') : String(v); }
+				const v = p[key];
+				return typeof v === 'number' ? v : -1;
+			};
+			const sorted = sort.key === null ? matched : matched.slice().sort((a, b) => {
+				const x = sortValueOf(a, sort.key);
+				const y = sortValueOf(b, sort.key);
+				const c = typeof x === 'string' || typeof y === 'string' ? String(x).localeCompare(String(y)) : x - y;
+				return c * (sort.dir === 'desc' ? -1 : 1);
+			});
+			const shown = sorted.slice(0, MARKET_MAX_ROWS);
+			const cycleSort = (key) => setSort((s) => (s.key !== key ? { key, dir: 'desc' } : s.dir === 'desc' ? { key, dir: 'asc' } : { key: null, dir: 'desc' }));
+			const copyCmd = (text) => {
+				setMsg(null);
+				copyText(text).then(
+					() => setMsg({ ok: true, text: '命令已复制' }),
+					(e) => setMsg({ ok: false, text: String((e && e.message) || e) })
+				);
+			};
+			const openRepo = (url) => {
+				setMsg(null);
+				openInPane(url).then((done) => {
+					if (done !== true) setMsg({ ok: false, text: '右栏浏览器没开，地址留在详情里' });
+				});
+			};
+			const categoryLabel = (id) => {
+				const found = state.categories[String(id || '')];
+				return found === undefined ? String(id || '') : found.zh;
+			};
+			const sourcesText = () => state.sources.map((s) => s.id + ' ' + (s.ok === true ? s.count + ' 条' : '不可达')).join(' · ');
+			/** 展开后的详情：长描述、双语、全部能力与红线、真实度量、截图、动作全在这里。 */
+			const detailOf = (p, spec, link, command) => {
+				const m = p.metrics === undefined || p.metrics === null ? {} : p.metrics;
+				const facts = [];
+				const fact = (k, v) => { if (v !== null && v !== undefined && String(v).length > 0) facts.push([k, String(v)]); };
+				fact('owner', p.owner);
+				fact('分类', categoryLabel(p.category));
+				fact('版本', p.version);
+				fact('收录', p.added);
+				fact('最近推送', m.updatedAt);
+				fact('来源', (Array.isArray(p.src) ? p.src : []).join(' + '));
+				const numbers = [];
+				const n = (k, v) => { if (typeof v === 'number') numbers.push(k + ' ' + v); };
+				n('★', typeof p.stars === 'number' ? p.stars : m.stars);
+				n('forks', m.forks);
+				n('↓', p.downloads);
+				n('安装', m.installs);
+				n('安装用户', m.users);
+				n('近 7 天安装', m.installs7d);
+				n('npm 近 7 天下载', m.downloads7d);
+				n('安装失败', m.failures);
+				const caps = capsOf(p);
+				const reds = redsOf(p);
+				const shots = (Array.isArray(p.screenshots) ? p.screenshots : []).filter((s) => typeof s === 'string' && /^https?:\/\//.test(s)).slice(0, 3);
+				const english = p.description !== null && typeof p.description === 'object' && typeof p.description.en === 'string' && p.description.en.length > 0 ? p.description.en : '';
+				return h('div', { className: 'vkHubDetail' },
+					h('div', { className: 'vkHubDesc' }, descOf(p) || '没有描述'),
+					english === '' || english === descOf(p) ? null : h('div', { className: 'vkHubDescEn' }, english),
+					facts.length === 0 ? null : h('div', { className: 'vkHubDetailRow' }, facts.map(([k, v]) => h('span', { key: k }, h('span', { className: 'vkHubDetailKey' }, k + ' '), v))),
+					numbers.length === 0 ? null : h('div', { className: 'vkHubDetailRow' }, numbers.map((t) => h('span', { key: t }, t))),
+					caps.length === 0 ? null : h('div', { className: 'vkHubChips' }, caps.map((c) => h(HubChip, { key: 'd-' + c, text: c, title: '能力：' + c }))),
+					reds.length === 0 ? null : h('div', { className: 'vkHubRed' }, '红线：' + reds.join('；')),
+					shots.length === 0 ? null : h('div', { className: 'vkHubShots' }, shots.map((s) => h('img', { key: s, className: 'vkHubShot', src: s, alt: '截图', loading: 'lazy', title: '在拓展栏浏览器打开', onClick: () => openRepo(s) }))),
+					h('div', { className: 'vkHubSort' },
+						link.length > 0 ? h(HubBtn, { key: 'repo', name: 'repo', title: '在拓展栏浏览器打开 ' + link, onClick: () => openRepo(link) }) : null,
+						command.length > 0 ? h(HubBtn, { key: 'cmd', name: 'copy', title: '复制安装命令', onClick: () => copyCmd(command) }) : null,
+						spec.length > 0 ? h('span', { key: 'spec', className: 'vkHubDetailKey', style: { userSelect: 'text', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: '在官方「添加插件」里粘贴：' + spec }, spec) : null,
+						link.length > 0 ? h('span', { key: 'url', className: 'vkHubDetailKey', style: { userSelect: 'text', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: link }, link) : null
+					)
+				);
+			};
+			const chipsOf = (p) => {
+				const caps = capsOf(p);
+				const reds = redsOf(p);
+				const chips = caps.slice(0, 5).map((c) => h(HubChip, { key: 'c-' + c, text: c, title: '能力：' + c }));
+				if (caps.length > 5) chips.push(h(HubChip, { key: 'c-more', text: '+' + (caps.length - 5) }));
+				if (reds.length > 0) chips.push(h(HubChip, { key: 'c-red', text: '⚠ ' + reds.length + ' 红线', tone: 'danger', title: reds.join('\n') }));
+				return chips.length === 0 ? null : h('div', { className: 'vkHubChips' }, chips);
+			};
 			return h('div', { className: 'vkHubPane' },
 				h('div', { className: 'vkHubBar' },
 					h('input', { className: 'vkHubInput', value: query, placeholder: '搜索', onChange: (e) => setQuery(e.target.value), spellCheck: false }),
-					h('div', { className: 'vkHubRowMeta', style: { flex: 'none' } }, metaText()),
+					h('div', { className: 'vkHubSort' }, MARKET_SORTS.map((s) => {
+						const on = sort.key === s.key;
+						return h(HubBtn, {
+							key: s.key,
+							name: on ? (sort.dir === 'desc' ? 'desc' : 'asc') : s.glyph,
+							tone: on ? 'accent' : undefined,
+							title: on ? '按' + s.label + (sort.dir === 'desc' ? '降序（再点升序，再点取消）' : '升序（再点取消）') : '按' + s.label + '降序',
+							onClick: () => cycleSort(s.key)
+						});
+					})),
+					h('div', { className: 'vkHubRowMeta', style: { flex: 'none' }, title: '清单来源：' + sourcesText() }, metaText(matched.length)),
 					h(HubBtn, { name: 'refresh', title: '重新拉取清单', onClick: load, disabled: state.phase === 'loading' })
 				),
 				h(HubMsg, { msg: state.phase === 'error' ? { ok: false, text: state.error } : msg }),
 				state.phase === 'loading' && state.plugins.length === 0 ? h('div', { className: 'vkHubEmpty' }, '加载中…')
-					: list.length === 0 ? h('div', { className: 'vkHubEmpty' }, state.phase === 'error' ? '拉取失败（原因见上）' : '没有匹配的插件')
-						: h('div', { className: 'vkHubList' }, list.map((p, i) => {
-							const spec = specOf(p);
-							return h('div', { key: nameOf(p) + '#' + i, className: 'vkHubRow' },
-								h('div', { className: 'vkHubRowMain' },
-									h('div', { className: 'vkHubRowName' }, nameOf(p)),
-									h('div', { className: 'vkHubRowMeta' }, metaOf(p) || spec || '—')
-								),
-								spec.length === 0 ? null : h(HubBtn, { name: 'install', title: '安装 ' + spec, disabled: busy !== '', onClick: () => install(spec) })
-							);
-						}))
+					: shown.length === 0 ? h('div', { className: 'vkHubEmpty' }, state.phase === 'error' ? '拉取失败（原因见上）' : '没有匹配的插件')
+						: h('div', null,
+							h('div', { className: 'vkHubList' }, shown.map((p, i) => {
+								const spec = specOf(p);
+								const link = String(p.url || p.page || '');
+								const command = commandOf(p);
+								const key = (String(p.owner || '') + '/' + nameOf(p) + '/' + String(p.url || '')).toLowerCase();
+								const open = openKey === key;
+								const toggle = (e) => { if (e && typeof e.stopPropagation === 'function') e.stopPropagation(); setOpenKey(open ? '' : key); };
+								return h('div', { key: key + '#' + i },
+									h('div', { className: 'vkHubRow vkHubRowOpen', onClick: toggle },
+										h(HubBtn, { name: open ? 'down' : 'right', title: open ? '收起详情' : '展开详情', onClick: toggle }),
+										h('div', { className: 'vkHubRowMain' },
+											h('div', { className: 'vkHubRowName' }, nameOf(p)),
+											h('div', { className: 'vkHubRowMeta' }, metaOf(p) || spec || '—'),
+											chipsOf(p)
+										),
+										link.length === 0 ? null : h(HubBtn, { name: 'repo', title: '在拓展栏浏览器打开 ' + link, onClick: (e) => { if (e && typeof e.stopPropagation === 'function') e.stopPropagation(); openRepo(link); } }),
+										spec.length === 0 ? null : h(HubBtn, { name: 'copy', title: '复制包名 ' + spec, onClick: (e) => { if (e && typeof e.stopPropagation === 'function') e.stopPropagation(); copyText(spec).then(() => setMsg({ ok: true, text: '已复制包名：' + spec }), (err) => setMsg({ ok: false, text: String(err) })); } })
+									),
+									open ? detailOf(p, spec, link, command) : null
+								);
+							})),
+							sorted.length > shown.length ? h('div', { className: 'vkHubMore' }, '只画前 ' + MARKET_MAX_ROWS + ' 条（共 ' + sorted.length + ' 条，用搜索缩小）') : null
+						)
 			);
 		}
 
-		/** 启停管理：读写 profile 的 cordis.patch.yml，官方基础插件不可关。 */
+		/**
+		 * 全局启停：与本插件「插件列表」的全局插件组同一批行（Loader 的 entryId 就是 patch 行的 id），
+		 * 每行两条轴——Loader 运行态只读、patch 层启停态可写。会话层（agentPresets 的 rows）不在这里
+		 * 冒充全局行，只在被预设提供的模块上打一个只读标记。
+		 */
 		function VKToggleTab() {
-			const [rows, setRows] = react.useState(null);
+			const [state, setState] = react.useState({ phase: 'loading', rows: [], loader: null, error: null });
 			const [busy, setBusy] = react.useState('');
 			const [msg, setMsg] = react.useState(null);
+			const [query, setQuery] = react.useState('');
+			const [closed, setClosed] = react.useState({ bundle: true, official: true, orphan: true });
 			const load = react.useCallback(() => {
+				setState((prev) => Object.assign({}, prev, { phase: 'loading', error: null }));
 				fetch('/dsh-hub/plugins').then((r) => r.json())
-					.then((d) => { if (d && d.ok === true) setRows(d.plugins); else setMsg({ ok: false, text: (d && d.error) || '读不到插件清单' }); })
-					.catch((e) => setMsg({ ok: false, text: String(e) }));
+					.then((d) => {
+						if (d && d.ok === true && Array.isArray(d.rows)) setState({ phase: 'ready', rows: d.rows, loader: d.loader || null, error: null });
+						else setState({ phase: 'error', rows: [], loader: null, error: (d && d.error) || '读不到插件清单' });
+					})
+					.catch((e) => setState({ phase: 'error', rows: [], loader: null, error: String(e) }));
 			}, []);
 			react.useEffect(load, [load]);
 			const flip = (row) => {
 				setBusy(row.id);
 				setMsg(null);
-				hubPost('/dsh-hub/plugins/toggle', { id: row.id, disabled: row.disabled !== true })
+				hubPost('/dsh-hub/plugins/toggle', { id: row.id, disabled: row.patchDisabled !== true })
 					.then((d) => {
 						setBusy('');
 						if (d && d.ok === true) { setMsg(d.changed === true ? { ok: true, text: '已改，重启后生效' } : null); load(); }
@@ -488,28 +752,102 @@ window.__ModuleLoader__.load({
 					})
 					.catch((e) => { setBusy(''); setMsg({ ok: false, text: String(e) }); });
 			};
+			const q = query.trim().toLowerCase();
+			const rows = state.rows.filter((r) => q.length === 0 || (r.id + ' ' + r.module).toLowerCase().includes(q));
+			const stats = state.rows.reduce((acc, r) => {
+				if (r.phase === 'failed') acc.failed += 1;
+				else if (r.loaderEnabled === true) acc.on += 1;
+				else if (r.loaderEnabled === false) acc.off += 1;
+				if (r.patchDisabled === true && r.loaderEnabled === true) acc.pending += 1;
+				return acc;
+			}, { on: 0, off: 0, failed: 0, pending: 0 });
+			const loaderText = (r) => {
+				if (r.loaderEnabled === null) return '不在 Loader 里';
+				if (r.phase === 'failed') return '加载失败';
+				if (r.loaderEnabled === false) return 'Loader 已停用';
+				return 'Loader 运行中' + (r.phase === null || r.phase === 'active' ? '' : ' · ' + r.phase);
+			};
+			const patchText = (r) => {
+				if (r.patchDisabled === true) return r.loaderEnabled === true ? 'patch 已停用 · 待重启' : 'patch 已停用';
+				if (r.patchPresent === true) return 'patch 已写（启用）';
+				return 'patch 无此行';
+			};
+			const chipsOf = (r) => {
+				const chips = [];
+				if (r.presets.length > 0) chips.push(h(HubChip, { key: 'preset', text: '由预设提供：' + r.presets.join(' · '), tone: 'accent', title: '由 Agent 预设按会话提供，去「插件列表」看会话层' }));
+				if (r.patchDisabled === true && r.loaderEnabled === true) chips.push(h(HubChip, { key: 'pending', text: '待重启生效', tone: 'danger' }));
+				if (r.orphan === true) chips.push(h(HubChip, { key: 'orphan', text: 'Loader 里没有此行', tone: 'danger' }));
+				if (r.base === true) chips.push(h(HubChip, { key: 'base', text: '基础插件' }));
+				return chips.length === 0 ? null : h('div', { className: 'vkHubChips' }, chips);
+			};
+			const summary = [
+				state.rows.length + ' 行',
+				'运行 ' + stats.on,
+				'停用 ' + stats.off,
+				stats.failed > 0 ? '失败 ' + stats.failed : null,
+				stats.pending > 0 ? '待重启 ' + stats.pending : null,
+				state.loader === null ? '拿不到 Loader 快照' : null
+			].filter((x) => x !== null).join(' · ');
+			const rowOf = (r) => {
+				const dot = r.phase === 'failed' ? ' vkHubDotErr' : r.loaderEnabled === true ? ' vkHubDotOn' : '';
+				const locked = r.base === true || r.presets.length > 0;
+				const short = moduleShortName(r.module);
+				const title = short.length > 0 && short !== r.id ? short + '  ' + r.id : r.id;
+				return h('div', { key: r.id, className: 'vkHubRow' },
+					h('span', { className: 'vkHubDot' + dot, title: loaderText(r) }),
+					h('div', { className: 'vkHubRowMain' },
+						h('div', { className: 'vkHubRowName' }, title),
+						h('div', { className: 'vkHubRowMeta' }, loaderText(r) + ' · ' + patchText(r)),
+						chipsOf(r)
+					),
+					h(HubBtn, {
+						name: 'power',
+						title: r.base === true ? '基础插件不可关闭' : r.presets.length > 0 ? '由 Agent 预设按会话提供，去「插件列表」看会话层' : r.patchDisabled === true ? '撤掉 patch 停用（重启后启用）' : '在 patch 层停用（重启后生效）',
+						tone: r.patchDisabled === true ? 'accent' : undefined,
+						disabled: locked || busy === r.id,
+						onClick: () => flip(r)
+					})
+				);
+			};
+			/* 分类就是「这行是从哪来的」：自己装的、bundle 带进来的、官方基础、patch 里多出来的。
+			   默认只展开「本 profile 装的」——那是真正会去关的那批。 */
+			const isOfficial = (r) => String(r.module || '').indexOf('@deepseek-ai/') === 0;
+			const GROUPS = [
+				{ id: 'profile', label: '本 profile 装的', glyph: 'plugins', pick: (r) => r.orphan !== true && r.installed === true },
+				{ id: 'official', label: '官方基础插件', glyph: 'gear', pick: (r) => r.orphan !== true && r.installed !== true && isOfficial(r) },
+				{ id: 'bundle', label: 'bundle 带进来的', glyph: 'extra', pick: (r) => r.orphan !== true && r.installed !== true && !isOfficial(r) },
+				{ id: 'orphan', label: 'patch 里多出来的行', glyph: 'warn', pick: (r) => r.orphan === true }
+			];
+			const searching = q.length > 0;
+			const groupStats = (list) => list.reduce((acc, r) => {
+				if (r.phase === 'failed') acc.failed += 1;
+				else if (r.loaderEnabled === true) acc.on += 1;
+				if (r.patchDisabled === true && r.loaderEnabled === true) acc.pending += 1;
+				return acc;
+			}, { on: 0, pending: 0, failed: 0 });
 			return h('div', { className: 'vkHubPane' },
 				h('div', { className: 'vkHubBar' },
-					h('div', { style: { flex: 1 } }),
+					h('input', { className: 'vkHubInput', value: query, placeholder: '搜索', onChange: (e) => setQuery(e.target.value), spellCheck: false }),
+					h('div', { className: 'vkHubRowMeta', style: { flex: 'none' }, title: state.loader === null ? 'Loader 快照不可用' : 'Loader 快照来源：' + state.loader }, summary),
 					h(HubBtn, { name: 'refresh', title: '刷新', onClick: load, disabled: busy !== '' })
 				),
-				h(HubMsg, { msg }),
-				rows === null ? h('div', { className: 'vkHubEmpty' }, '加载中…')
-					: rows.length === 0 ? h('div', { className: 'vkHubEmpty' }, '没有可管理的插件')
-						: h('div', { className: 'vkHubList' }, rows.map((row) => h('div', { key: row.id, className: 'vkHubRow' },
-							h('span', { className: 'vkHubDot' + (row.disabled === true ? '' : ' vkHubDotOn'), title: row.disabled === true ? '已停用' : '运行中' }),
-							h('div', { className: 'vkHubRowMain' },
-								h('div', { className: 'vkHubRowName' }, row.id),
-								h('div', { className: 'vkHubRowMeta' }, row.base === true ? '基础插件（不可关）' : (row.disabled === true ? '已停用' : '运行中'))
-							),
-							h(HubBtn, {
-								name: 'power',
-								title: row.base === true ? '基础插件不可关闭' : (row.disabled === true ? '启用' : '停用'),
-								tone: row.disabled === true ? 'accent' : undefined,
-								disabled: row.base === true || busy === row.id,
-								onClick: () => flip(row)
-							})
-						)))
+				h(HubMsg, { msg: state.phase === 'error' ? { ok: false, text: state.error } : msg }),
+				state.phase === 'loading' && state.rows.length === 0 ? h('div', { className: 'vkHubEmpty' }, '加载中…')
+					: rows.length === 0 ? h('div', { className: 'vkHubEmpty' }, state.phase === 'error' ? '读不到插件清单' : '没有匹配的插件')
+						: h('div', { className: 'vkHubList' }, GROUPS.map((group) => {
+							const list = rows.filter(group.pick);
+							if (list.length === 0) return null;
+							const shut = closed[group.id] === true && !searching;
+							const gs = groupStats(list);
+							return h('div', { key: group.id },
+								h('div', { className: 'vkHubGroup', title: shut ? '展开' : '收起', onClick: () => setClosed((c) => Object.assign({}, c, { [group.id]: !c[group.id] })) },
+									h(HubIcon, { name: shut ? 'right' : 'down', size: 12 }),
+									h('span', null, group.label),
+									h('span', { className: 'vkHubGroupN' }, list.length + ' 行 · 运行 ' + gs.on + (gs.pending > 0 ? ' · 待重启 ' + gs.pending : '') + (gs.failed > 0 ? ' · 失败 ' + gs.failed : ''))
+								),
+								shut ? null : h('div', { className: 'vkHubList' }, list.map(rowOf))
+							);
+						}))
 			);
 		}
 
@@ -608,7 +946,7 @@ window.__ModuleLoader__.load({
 				name: 'settings.plugins.tab',
 				id: 'toggle',
 				order: 30,
-				label: '启停管理'
+				label: '全局启停'
 			}, VKToggleTab));
 			/* 已归档会话 · ZIP 归档（软归档仍是官方那页，两页同挂一个导航项） */
 			ctx.slots.inject('settings.section', () => ctx.slots.register({
