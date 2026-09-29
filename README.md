@@ -24,6 +24,13 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-contract
 ./install.ps1
 ```
 
+不克隆仓库、直接从 Release 装（一行一个包）：
+
+```sh
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-contract-0.1.0.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-layout-0.1.0.tgz"
+```
+
 装完重启 web 实例。每个包目录里还有它自己的 README。
 
 ## 许可
