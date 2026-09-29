@@ -44,7 +44,7 @@ window.__ModuleLoader__.load({
 		const PANE_GLYPH = {
 			sessions: "menu", files: "folder", tasks: "tasks", extensions: "gear",
 			viewer: "image", tools: "gear",
-			persona: "edit", skills: "tasks", mcp: "gear", extra: "file"
+			skills: "tasks", mcp: "gear", extra: "file"
 		};
 
 		/* ── 样式 ─────────────────────────────────────────────────── */

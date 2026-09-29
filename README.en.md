@@ -2,7 +2,7 @@
 
 [中文](README.md) | English
 
-Three-column layout skeleton: slot contract + shell
+Three-column layout skeleton plus the settings centre: slot contract, shell, settings pages
 
 ## Packages
 
@@ -10,6 +10,8 @@ Three-column layout skeleton: slot contract + shell
 |---|---|
 | `dsh-vk-contract` | Slot contract: slot table, pane registry, neutral service names |
 | `dsh-vk-layout` | Layout shell: left/right tab hosts, settings host, overlay seats |
+| `dsh-vk-settings` | Settings pages owned by the skeleton: Skill management and MCP management |
+| `dsh-vk-settings-hub` | Settings centre: own left-column nav over the official panel, plugin market + enable/disable tabs, ZIP archive page |
 
 ## Install
 
@@ -29,6 +31,8 @@ Install straight from the release, no clone needed:
 ```sh
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-contract-0.1.0.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-layout-0.1.0.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-settings-0.1.0.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.0/dsh-vk-settings-hub-0.1.0.tgz"
 ```
 
 If the install fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` (a TLS-intercepting proxy; Node does not read the system CA store by default), run `$env:NODE_OPTIONS='--use-system-ca'` first.

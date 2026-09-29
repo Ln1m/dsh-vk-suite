@@ -26,9 +26,9 @@ window.__ModuleLoader__.load({
         cmdstrip: 'vk.bottom.cmdstrip'
       },
       settings: {
-        persona: 'vk.settings.persona',
         skills: 'vk.settings.skills',
         mcp: 'vk.settings.mcp',
+        extra: 'vk.settings.extra',
       },
       input: {
         left: 'vk.input.left',
@@ -88,9 +88,9 @@ window.__ModuleLoader__.load({
       { area: 'bottom', id: 'cmdstrip', slot: VK.bottom.cmdstrip, kind: 'list', scope: 'root', pane: true, label: '命令行', order: 10, provider: 'dsh-vk-layout（代码已并入骨架）', origin: 'vk-new', legacy: [] },
 
       /* ═══ 四、设置页 ═══ */
-      { area: 'settings', id: 'persona', slot: VK.settings.persona, kind: 'list', scope: 'root', pane: true, label: '全局人设', order: 10, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=persona)'] },
       { area: 'settings', id: 'skills', slot: VK.settings.skills, kind: 'list', scope: 'root', pane: true, label: 'Skill 管理', order: 20, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=skills)'] },
       { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=mcp)'] },
+      { area: 'settings', id: 'extra', slot: VK.settings.extra, kind: 'list', scope: 'root', pane: true, label: '扩展', order: 40, provider: null, origin: 'vk-new', legacy: [] },
 
       /* ═══ 五、帧级 ═══ */
       { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] },
