@@ -20,6 +20,11 @@ const PROFILE_JSON = join(PROFILE_DIR, "package.json");
 const PATCH_FILE = join(PROFILE_DIR, "cordis.patch.yml");
 const BACKUP_DIR = process.env.DSH_HUB_BACKUP_DIR ?? join(ROOT, "backups", "settings-hub-plugin-toggles");
 const MARKET_URL = "https://awesome-dsh-plugin.com/plugins.json";
+/* 清单实测 5.0MB / 4382 条（2026-09-29）：12s 那版只够握手，正文要几十秒，必然 abort。
+   放大到 90s，并把拿到的清单落盘，之后秒开 + 后台刷新。 */
+const MARKET_TIMEOUT_MS = 180000;
+const MARKET_CACHE = join(ROOT, "tmp", "dsh-market-cache.json");
+const MARKET_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const LOG = join(ROOT, "logs", "dsh-vk-settings-hub.log");
 const LOG_MAX_BYTES = 1024 * 1024;
 const INSTALL_TIMEOUT_MS = 180000;
@@ -153,6 +158,56 @@ function applyPluginPatch(id, disabled, options) {
 	return { ok: true, changed: true, backup };
 }
 
+/** 市场清单的载荷可能是数组，也可能是包着数组的对象；数组字段名按候选兜底找一遍。 */
+function parseMarket(data) {
+	if (Array.isArray(data)) return data;
+	if (data !== null && typeof data === "object") {
+		for (const key of ["plugins", "items", "data", "list", "entries"]) {
+			if (Array.isArray(data[key])) return data[key];
+		}
+		for (const key of Object.keys(data)) if (Array.isArray(data[key])) return data[key];
+	}
+	return null;
+}
+
+function readMarketCache() {
+	try {
+		const c = JSON.parse(readFileSync(MARKET_CACHE, "utf8"));
+		if (Array.isArray(c?.plugins) && typeof c.fetchedAt === "string") return c;
+	} catch { /* 还没缓存 / 缓存坏了 */ }
+	return null;
+}
+
+function writeMarketCache(plugins) {
+	try {
+		writeFileSync(MARKET_CACHE, JSON.stringify({ fetchedAt: new Date().toISOString(), plugins }), "utf8");
+	} catch (e) {
+		log("market cache write failed: " + String((e && e.message) || e));
+	}
+}
+
+/** 同一时刻只拉一份（并发调用共享同一个 promise）。 */
+let marketInFlight = null;
+function fetchMarket() {
+	if (marketInFlight !== null) return marketInFlight;
+	marketInFlight = (async () => {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), MARKET_TIMEOUT_MS);
+		try {
+			const r = await fetch(MARKET_URL, { signal: controller.signal, headers: { accept: "application/json" } });
+			if (!r.ok) throw new Error("market http " + r.status);
+			const list = parseMarket(JSON.parse(await r.text()));
+			if (list === null) throw new Error("market payload carries no array of plugins");
+			writeMarketCache(list);
+			return list;
+		} finally {
+			clearTimeout(timer);
+			marketInFlight = null;
+		}
+	})();
+	return marketInFlight;
+}
+
 export function apply(ctx) {
 	const webServer = ctx.get("webServer");
 	if (!webServer) {
@@ -174,22 +229,25 @@ export function apply(ctx) {
 		kind: "exact",
 		path: "/dsh-hub/market",
 		handler: async (req, res) => {
+			const cached = readMarketCache();
+			if (cached !== null) {
+				const fresh = Date.now() - Date.parse(cached.fetchedAt) < MARKET_CACHE_MAX_AGE_MS;
+				if (!fresh) {
+					/* 旧清单先给出去，后台悄悄刷新；拉不到就继续用旧的，别把页面卡空 */
+					fetchMarket()
+						.then((plugins) => log("market cache refreshed: " + plugins.length))
+						.catch((e) => log("market cache refresh failed: " + String((e && e.message) || e)));
+				}
+				send(res, { ok: true, plugins: cached.plugins, fetchedAt: cached.fetchedAt, cached: true, refreshing: !fresh });
+				return;
+			}
 			try {
-				const controller = new AbortController();
-				const timer = setTimeout(() => controller.abort(), 12000);
-				let text = "";
-				try {
-					const r = await fetch(MARKET_URL, { signal: controller.signal, headers: { accept: "application/json" } });
-					text = await r.text();
-					if (!r.ok) { send(res, { ok: false, error: "market http " + r.status }); return; }
-				} finally { clearTimeout(timer); }
-				let data = null;
-				try { data = JSON.parse(text); } catch { send(res, { ok: false, error: "market json parse failed" }); return; }
-				const list = Array.isArray(data) ? data : (Array.isArray(data?.plugins) ? data.plugins : null);
-				if (list === null) { send(res, { ok: false, error: "market payload has no plugins array" }); return; }
-				send(res, { ok: true, fetchedAt: new Date().toISOString(), plugins: list });
+				const plugins = await fetchMarket();
+				send(res, { ok: true, plugins, fetchedAt: new Date().toISOString(), cached: false });
 			} catch (e) {
-				const msg = e && e.name === "AbortError" ? "market fetch timeout" : String((e && e.message) || e);
+				const msg = e && e.name === "AbortError"
+					? "market fetch timeout after " + Math.round(MARKET_TIMEOUT_MS / 1000) + "s"
+					: String((e && e.message) || e);
 				log("market fetch failed: " + msg);
 				send(res, { ok: false, error: msg });
 			}
@@ -248,4 +306,4 @@ export function apply(ctx) {
 	log("routes registered: /dsh-hub/market /dsh-hub/market/install /dsh-hub/plugins /dsh-hub/plugins/toggle");
 }
 
-export { applyPluginPatch, patchState, profilePluginIds, specSafe };
+export { applyPluginPatch, parseMarket, patchState, profilePluginIds, specSafe };

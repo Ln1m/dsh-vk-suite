@@ -370,21 +370,39 @@ window.__ModuleLoader__.load({
 
 		/** 插件市场：清单来自 host 侧转发（外网），装走 dsh plugin add。 */
 		function VKMarketTab() {
-			const [state, setState] = react.useState({ phase: 'loading', plugins: [], error: null });
+			const [state, setState] = react.useState({ phase: 'loading', plugins: [], error: null, fetchedAt: null, cached: false, refreshing: false });
 			const [query, setQuery] = react.useState('');
 			const [busy, setBusy] = react.useState('');
 			const [msg, setMsg] = react.useState(null);
 			const load = react.useCallback(() => {
-				setState({ phase: 'loading', plugins: [], error: null });
+				/* 加载时不丢已有清单：host 侧有缓存时是秒回，出错也还能看旧的 */
+				setState((prev) => Object.assign({}, prev, { phase: 'loading', error: null }));
 				fetch('/dsh-hub/market').then((r) => r.json())
 					.then((d) => {
-						if (d && d.ok === true) setState({ phase: 'ready', plugins: d.plugins, error: null });
-						else setState({ phase: 'error', plugins: [], error: (d && d.error) || '市场清单不可达' });
+						if (d && d.ok === true) {
+							setState({ phase: 'ready', plugins: d.plugins, error: d.error || null, fetchedAt: d.fetchedAt || null, cached: d.cached === true, refreshing: d.refreshing === true });
+						} else {
+							setState((prev) => Object.assign({}, prev, { phase: 'error', error: (d && d.error) || '市场清单读不到' }));
+						}
 					})
-					.catch((e) => setState({ phase: 'error', plugins: [], error: String(e) }));
+					.catch((e) => setState((prev) => Object.assign({}, prev, { phase: 'error', error: String(e) })));
 			}, []);
 			react.useEffect(load, [load]);
-			const specOf = (p) => String(p.spec || p.install || p.source || p.repo || p.repository || p.url || '');
+			/* 清单 4000+ 条、5MB：把「多少条 / 什么时候拿的 / 是否在后台刷新」摆在标题行上，
+			   免得用户以为页面坏了（首拉要几十秒是清单体积决定的，不是网络挂了） */
+			const metaText = () => {
+				if (state.phase === 'loading' && state.plugins.length === 0) return '拉取中（首次要几十秒）';
+				const parts = [state.plugins.length + ' 条'];
+				if (state.fetchedAt !== null) {
+					const t = new Date(state.fetchedAt);
+					parts.push((state.cached ? '缓存 ' : '更新 ') + (Number.isNaN(t.getTime()) ? state.fetchedAt : String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0')));
+				}
+				if (state.refreshing) parts.push('后台刷新中');
+				return parts.join(' · ');
+			};
+			/* 清单条目的字段实测是 {name, owner, url, page, category, description, npm, version, stars, downloads}——
+			   没有 spec。安装源优先取 npm 包名（注册表装法），没有 npm 才退回仓库 URL。 */
+			const specOf = (p) => String(p.npm || p.spec || p.install || p.source || p.repo || p.repository || p.url || '');
 			const nameOf = (p) => String(p.name || p.title || p.id || p.package || '');
 			const descOf = (p) => String(p.description || p.desc || p.summary || '');
 			const install = (spec) => {
@@ -403,11 +421,12 @@ window.__ModuleLoader__.load({
 			return h('div', { className: 'vkHubPane' },
 				h('div', { className: 'vkHubBar' },
 					h('input', { className: 'vkHubInput', value: query, placeholder: '搜索', onChange: (e) => setQuery(e.target.value), spellCheck: false }),
-					h(HubBtn, { name: 'refresh', title: '刷新', onClick: load, disabled: state.phase === 'loading' })
+					h('div', { className: 'vkHubRowMeta', style: { flex: 'none' } }, metaText()),
+					h(HubBtn, { name: 'refresh', title: '重新拉取清单', onClick: load, disabled: state.phase === 'loading' })
 				),
 				h(HubMsg, { msg: state.phase === 'error' ? { ok: false, text: state.error } : msg }),
-				state.phase === 'loading' ? h('div', { className: 'vkHubEmpty' }, '加载中…')
-					: list.length === 0 ? h('div', { className: 'vkHubEmpty' }, state.phase === 'error' ? '市场不可达' : '没有匹配的插件')
+				state.phase === 'loading' && state.plugins.length === 0 ? h('div', { className: 'vkHubEmpty' }, '加载中…')
+					: list.length === 0 ? h('div', { className: 'vkHubEmpty' }, state.phase === 'error' ? '拉取失败（原因见上）' : '没有匹配的插件')
 						: h('div', { className: 'vkHubList' }, list.map((p, i) => {
 							const spec = specOf(p);
 							return h('div', { key: nameOf(p) + '#' + i, className: 'vkHubRow' },
