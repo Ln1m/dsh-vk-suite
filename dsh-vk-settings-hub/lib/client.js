@@ -400,11 +400,36 @@ window.__ModuleLoader__.load({
 				if (state.refreshing) parts.push('后台刷新中');
 				return parts.join(' · ');
 			};
-			/* 清单条目的字段实测是 {name, owner, url, page, category, description, npm, version, stars, downloads}——
-			   没有 spec。安装源优先取 npm 包名（注册表装法），没有 npm 才退回仓库 URL。 */
-			const specOf = (p) => String(p.npm || p.spec || p.install || p.source || p.repo || p.repository || p.url || '');
+			/* 清单条目的字段实测是 {name, owner, url, page, category, description, npm, version, stars, downloads,
+			   capabilities}——没有 spec，而且 description 是 {en, zh} 对象（直接 String() 会渲染成 [object Object]）。
+			   安装源：有 npm 包名走注册表；只有仓库 URL 时补 git+ 前缀，否则 pnpm 认不出这个 spec。 */
+			const specOf = (p) => {
+				if (typeof p.npm === 'string' && p.npm.length > 0) return p.npm;
+				for (const key of ['spec', 'install', 'source', 'repo', 'repository']) {
+					if (typeof p[key] === 'string' && p[key].length > 0) return p[key];
+				}
+				const url = String(p.url || '');
+				if (url.length === 0) return '';
+				if ((url.indexOf('github.com/') >= 0 || url.indexOf('gitlab.com/') >= 0) && url.indexOf('git+') !== 0) return 'git+' + url;
+				return url;
+			};
 			const nameOf = (p) => String(p.name || p.title || p.id || p.package || '');
-			const descOf = (p) => String(p.description || p.desc || p.summary || '');
+			const descOf = (p) => {
+				const d = p.description ?? p.desc ?? p.summary ?? '';
+				if (typeof d === 'string') return d;
+				if (d !== null && typeof d === 'object') return String(d.zh || d.en || '');
+				return '';
+			};
+			const metaOf = (p) => {
+				const parts = [];
+				if (typeof p.category === 'string' && p.category.length > 0) parts.push(p.category);
+				if (typeof p.version === 'string' && p.version.length > 0) parts.push('v' + p.version);
+				if (typeof p.stars === 'number') parts.push('★' + p.stars);
+				if (typeof p.downloads === 'number' && p.downloads > 0) parts.push('↓' + p.downloads);
+				const d = descOf(p);
+				if (d.length > 0) parts.push(d);
+				return parts.join(' · ');
+			};
 			const install = (spec) => {
 				setBusy(spec);
 				setMsg(null);
@@ -417,7 +442,8 @@ window.__ModuleLoader__.load({
 					.catch((e) => { setBusy(''); setMsg({ ok: false, text: String(e) }); });
 			};
 			const q = query.trim().toLowerCase();
-			const list = state.plugins.filter((p) => q.length === 0 || nameOf(p).toLowerCase().includes(q) || descOf(p).toLowerCase().includes(q));
+			const hayOf = (p) => (nameOf(p) + ' ' + descOf(p) + ' ' + String(p.owner || '') + ' ' + String(p.category || '')).toLowerCase();
+			const list = state.plugins.filter((p) => q.length === 0 || hayOf(p).includes(q));
 			return h('div', { className: 'vkHubPane' },
 				h('div', { className: 'vkHubBar' },
 					h('input', { className: 'vkHubInput', value: query, placeholder: '搜索', onChange: (e) => setQuery(e.target.value), spellCheck: false }),
@@ -432,7 +458,7 @@ window.__ModuleLoader__.load({
 							return h('div', { key: nameOf(p) + '#' + i, className: 'vkHubRow' },
 								h('div', { className: 'vkHubRowMain' },
 									h('div', { className: 'vkHubRowName' }, nameOf(p)),
-									h('div', { className: 'vkHubRowMeta' }, descOf(p) || spec || '—')
+									h('div', { className: 'vkHubRowMeta' }, metaOf(p) || spec || '—')
 								),
 								spec.length === 0 ? null : h(HubBtn, { name: 'install', title: '安装 ' + spec, disabled: busy !== '', onClick: () => install(spec) })
 							);
