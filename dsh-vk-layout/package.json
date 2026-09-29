@@ -35,9 +35,10 @@
   "author": "Ln1m (https://github.com/Ln1m)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ln1m/dsh-vk-suite.git"
+    "url": "git+https://github.com/Ln1m/dsh-vk-suite.git",
+    "directory": "dsh-vk-layout"
   },
-  "homepage": "https://github.com/Ln1m/dsh-vk-suite#readme",
+  "homepage": "https://github.com/Ln1m/dsh-vk-suite/tree/main/dsh-vk-layout#readme",
   "bugs": {
     "url": "https://github.com/Ln1m/dsh-vk-suite/issues"
   }
