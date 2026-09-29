@@ -1,6 +1,6 @@
 {
   "name": "dsh-vk-settings",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "3栏layout 设置页分区：Skill 管理 / MCP 管理。",
   "type": "module",
   "main": "lib/index.js",

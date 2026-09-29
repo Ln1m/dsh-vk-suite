@@ -1,6 +1,6 @@
 {
   "name": "dsh-vk-layout",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "3栏layout 骨架：左栏 Tab 宿主、右栏 Tab 宿主（含下段命令行面板）、标签条、槽接线与三个中立服务。",
   "type": "module",
   "main": "lib/index.js",

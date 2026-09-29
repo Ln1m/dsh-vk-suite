@@ -46,6 +46,12 @@ window.__ModuleLoader__.load({
 			viewer: "image", tools: "gear",
 			skills: "tasks", mcp: "gear", extra: "file"
 		};
+		/**
+		 * 正文是**官方本体镜像**的栏目（见 apply 里的 browserMirror：官方 WorkspaceBrowser → VK.sidebar.sessions）。
+		 * 这类栏目的展开态归官方组件自己管，切走时不要替它收（2026-09-30：旧代码顺手点了官方
+		 * 「工作区」分组的 aria-expanded，用户报「会话tab也会自动折叠」）。
+		 */
+		const MIRRORED_PANES = new Set(["sessions"]);
 
 		/* ── 样式 ─────────────────────────────────────────────────── */
 		const CSS = [
@@ -78,15 +84,13 @@ window.__ModuleLoader__.load({
 			// mnemon 自带入口一律藏掉（两个已知标记 + 文本兜底标记）
 			"[data-dsh-plugin=\"dsh-mnemon\"][data-dsh-part=\"sidebar-icon\"]{display:none!important}",
 			"[data-vk-mnemon-hidden=\"1\"]{display:none!important}",
-			// 「通用设置 / Agent 预设」页内 tab：**照抄官方插件页那套类名与规则**
+			// 官方「插件」页那条 tab 的兜底样式
 			// （逐字取自 @deepseek-ai/dsh-client-ui-settings-plugins 的 PluginsSettingsSection.module.css；
 			//  官方那支 CSS 通常已注入，这里作为兜底，保证样式不会塌）
 			".pbvGtq_tabs{border-bottom:.5px solid var(--dsw-alias-border-l2);align-items:flex-end;gap:22px;margin-top:2px;display:flex}",
 			".pbvGtq_tab{color:var(--dsw-alias-label-tertiary);font:inherit;cursor:pointer;background:0 0;border:0;padding:7px 1px 9px;font-size:13px;line-height:20px;position:relative}",
 			".pbvGtq_tab:hover,.pbvGtq_tab[data-active=true]{color:var(--dsw-alias-label-primary)}",
 			".pbvGtq_tab[data-active=true]:after{background:var(--dsw-alias-label-primary);content:\"\";border-radius:2px 2px 0 0;height:2px;position:absolute;bottom:-1px;left:0;right:0}",
-			// 自绘左栏里这两条子项搬到正文 tab 里去了，左栏只留一个「通用设置」
-			"[data-vk-hub-sub=\"general\"],[data-vk-hub-sub=\"agent-presets\"]{display:none!important}",
 			".vk_tabBtnIcon{width:26px;padding:0;justify-content:center}",
 			".vk_rail{display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px}",
 			".vk_railBtn{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:38px;height:38px;border-radius:9px;color:var(--dsw-alias-label-secondary);display:flex;align-items:center;justify-content:center;position:relative;transition:background-color .12s,color .12s,transform .08s}",
@@ -333,6 +337,8 @@ window.__ModuleLoader__.load({
 					const prev = prevActive.current;
 					prevActive.current = activeId;
 					if (prev === null || prev === void 0 || prev === activeId) return;
+					// 官方本体镜像的栏目（会话）：展开态是官方组件的内部状态，不参与骨架这一拍。
+					if (MIRRORED_PANES.has(prev)) return;
 					try {
 						const host = document.querySelector("[data-vk-area=\"" + area + "\"]");
 						const pane = host === null ? null : host.querySelector("[data-vk-pane=\"" + prev + "\"]");
@@ -618,6 +624,27 @@ window.__ModuleLoader__.load({
 		}
 
 		/* ── 官方条目镜像（不改官方包，把官方注册的渲染能力搬到私有槽上） ── */
+		/**
+		 * 官方会话行的子槽键 → 本骨架私有键。
+		 * 一个槽键只能被声明一次（`slot "X" is already declared`），那几个键的声明权在官方条目手里，
+		 * 镜像条目拿不到授权（实测 `renderSlot` 抛 SlotOwnershipError），所以整份复刻到自己的键上再路由过去。
+		 */
+		const VK_SESSIONS_SUB = {
+			menu: "vk.sidebar.sessions.menu",
+			action: "vk.sidebar.sessions.action",
+			leading: "vk.sidebar.sessions.leading",
+			hover: "vk.sidebar.sessions.hover"
+		};
+		const VK_SESSIONS_ROUTE = {
+			"sidebar.workspaces.directoryFlow": VK.sidebar.dirflow,
+			"sidebar.workspaces.session.menu.item": VK_SESSIONS_SUB.menu,
+			"sidebar.workspaces.session.row.action": VK_SESSIONS_SUB.action,
+			"sidebar.session.row.leading": VK_SESSIONS_SUB.leading,
+			"sidebar.session.row.hover": VK_SESSIONS_SUB.hover
+		};
+		/** 官方 menuOpenStateFactory 同款（把本次渲染出现的开合态交给条目），见 ui-workspace contract/slots.js。 */
+		const vkMenuOpenState = (_standard, state) => () => state;
+
 		function vkCreateMirror(ctx, sourceKey, targetKey, options) {
 			const slots = ctx.slots;
 			const config = options === undefined || options === null ? {} : options;
@@ -642,17 +669,65 @@ window.__ModuleLoader__.load({
 				drop();
 				if (source === void 0) return;
 				mirrored = source;
-				try {
-					dispose = slots.register({
-						name: targetKey,
-						children: config.children,
-						store: source.store,
-						inject: typeof config.inject === "function" ? config.inject(source) : source.inject,
-						locale: source.locale
-					}, typeof config.component === "function" ? config.component(source) : source.component);
-				} catch (error) {
+				const component = typeof config.component === "function" ? config.component(source) : source.component;
+				const inject = typeof config.inject === "function" ? config.inject(source) : source.inject;
+				// 子槽表按序试：第一张最全（含要放行的官方子槽），撞上「已被别处声明」就退到下一张。
+				// 宁可少放行，也不许整块镜像注册不上 —— 那会让整个栏目空白。
+				const tables = typeof config.children === "function" ? config.children(source) : [config.children];
+				let lastError = null;
+				for (const table of tables) {
+					try {
+						dispose = slots.register({
+							name: targetKey,
+							children: table,
+							store: source.store,
+							inject,
+							locale: source.locale
+						}, component);
+						lastError = null;
+						break;
+					} catch (error) {
+						lastError = error;
+					}
+				}
+				if (dispose === null) {
 					drop();
-					try { ctx.logger.warn("[vk-layout] 镜像 " + sourceKey + " → " + targetKey + " 失败：" + String(error && error.message ? error.message : error)); } catch { /* ignore */ }
+					try { ctx.logger.warn("[vk-layout] 镜像 " + sourceKey + " → " + targetKey + " 失败：" + String(lastError && lastError.message ? lastError.message : lastError)); } catch { /* ignore */ }
+				}
+			};
+			return { sync, dispose: drop };
+		}
+
+		/**
+		 * list 槽镜像：源键上**每一条**条目（按 id）复刻到私有键 —— 官方会话行的「…」菜单项与行内按钮走这里。
+		 * 与 vkCreateMirror 的差别：那个只搬 single 槽的胜者，这个要搬全部；每次 sync 整份重建，
+		 * 因为父条目的子槽被回收时（镜像重挂）挂在下面的旧注册会一起失效。
+		 */
+		function vkMirrorListSlot(ctx, sourceKey, targetKey) {
+			const slots = ctx.slots;
+			let live = [];
+			const drop = () => {
+				const current = live;
+				live = [];
+				for (const off of current) { try { off(); } catch { /* 已被父条目连带回收：清理是空操作 */ } }
+			};
+			const sync = () => {
+				drop();
+				const rows = typeof slots.entries === "function" ? slots.entries(sourceKey) : [];
+				for (const entry of rows) {
+					const id = entry === null || entry === void 0 || entry.options === void 0 ? void 0 : entry.options.id;
+					if (id === void 0 || typeof entry.component !== "function") continue;
+					try {
+						live.push(slots.register({
+							name: targetKey,
+							id,
+							order: entry.options.order,
+							locale: entry.locale,
+							inject: entry.inject
+						}, entry.component));
+					} catch (error) {
+						try { ctx.logger.warn("[vk-layout] 镜像 " + sourceKey + "#" + id + " → " + targetKey + " 失败：" + String(error && error.message ? error.message : error)); } catch { /* ignore */ }
+					}
 				}
 			};
 			return { sync, dispose: drop };
@@ -784,29 +859,70 @@ window.__ModuleLoader__.load({
 				children: childMap("sidebar")
 			}, makePaneAreaHost("sidebar", { rail: true, tail: VKSidebarTabTail })));
 
-			/* 左栏「会话」栏目：官方 WorkspaceBrowser 本体镜像到私有槽，不自绘。 */
+			/* 左栏「会话」栏目：官方 WorkspaceBrowser 本体镜像到私有槽，不自绘。
+			   官方组件的行菜单/行按钮/悬浮卡走它自己的 renderSlot 键（sidebar.workspaces.session.menu.item 等），
+			   而一个槽键只能被声明一次 —— 那几个键的声明权在官方条目手里，镜像条目申请不到授权，
+			   调用会抛 SlotOwnershipError（实测：`slot '…' is not declared by this entry's children`）。
+			   所以把这些 list 槽整份复刻到私有键，再把官方组件的 renderSlot 调用路由过去；
+			   旧写法对这些键一律 return null，实测点「…」菜单是空的（2026-09-30 用户报的「交互和官方不一样」）。 */
+			const sessionsChildren = () => {
+				let shortcuts;
+				try { shortcuts = ctx.get("shortcuts")?.catalog; } catch { shortcuts = undefined; }
+				return [
+					{
+						[VK.sidebar.dirflow]: { kind: "single", scope: "root" },
+						[VK_SESSIONS_SUB.menu]: { kind: "list", scope: "root", inject: { hooks: { menuOpenState: vkMenuOpenState, shortcuts } } },
+						[VK_SESSIONS_SUB.action]: { kind: "list", scope: "root" },
+						[VK_SESSIONS_SUB.leading]: { kind: "list", scope: "root" },
+						[VK_SESSIONS_SUB.hover]: { kind: "list", scope: "root" }
+					},
+					// 退路：任一私有子槽被别处抢先声明时退回「只有目录洞」那张，栏目不至于空白。
+					{ [VK.sidebar.dirflow]: { kind: "single", scope: "root" } }
+				];
+			};
 			const browserMirror = vkCreateMirror(ctx, "sidebar.workspaces", VK.sidebar.sessions, {
 				// 官方那条自己被本骨架遮蔽（同键优先级更低者胜），所以镜像要显式挑「非自研」的那条：
 				// 迁移期旧布局插件也住在同一个键上，名字前缀同样排除掉。
 				pick: (list) => list.filter((entry) => typeof entry.component === "function" && !/^(VK|Anoslide)/.test(entry.component.name || ""))[0],
-				// 官方组件会在「添加工作区」弹层里 renderSlot 官方的目录选择洞 —— 重定向到本骨架声明的私有洞。
-				children: { [VK.sidebar.dirflow]: { kind: "single", scope: "root" } },
+				children: sessionsChildren,
 				component: (source) => {
 					const Browser = source.component;
 					return function VKWorkspaceBrowser(props) {
 						const slotOf = props.renderSlot;
+						if (typeof slotOf !== "function") return h(Browser, props);
 						return h(Browser, Object.assign({}, props, {
-							renderSlot: (key, owner) => (key === "sidebar.workspaces.directoryFlow" && typeof slotOf === "function"
-								? slotOf(VK.sidebar.dirflow, owner)
-								: null)
+							renderSlot: (key, ...rest) => {
+								const target = VK_SESSIONS_ROUTE[key];
+								if (target === void 0) return null;
+								try { return slotOf(target, ...rest); } catch { return null; }
+							}
 						}));
 					};
 				}
 			});
+			const subKeys = [
+				"sidebar.workspaces.session.menu.item",
+				"sidebar.workspaces.session.row.action",
+				"sidebar.session.row.leading",
+				"sidebar.session.row.hover"
+			];
+			const subMirrors = [
+				vkMirrorListSlot(ctx, subKeys[0], VK_SESSIONS_SUB.menu),
+				vkMirrorListSlot(ctx, subKeys[1], VK_SESSIONS_SUB.action),
+				vkMirrorListSlot(ctx, subKeys[2], VK_SESSIONS_SUB.leading),
+				vkMirrorListSlot(ctx, subKeys[3], VK_SESSIONS_SUB.hover)
+			];
 			ctx.slots.inject(VK.sidebar.sessions, () => ctx.slots.inject("sidebar.workspaces", () => {
-				const off = ctx.slots.subscribe("sidebar.workspaces", browserMirror.sync);
-				browserMirror.sync();
-				return () => { try { off(); } catch { /* ignore */ } browserMirror.dispose(); };
+				// 顺序要紧：先让镜像条目挂上（私有子槽随之声明），再往私有槽里复刻条目。
+				const syncAll = () => { browserMirror.sync(); for (const mirror of subMirrors) mirror.sync(); };
+				const offs = [ctx.slots.subscribe("sidebar.workspaces", syncAll)];
+				for (const key of subKeys) offs.push(ctx.slots.subscribe(key, syncAll));
+				syncAll();
+				return () => {
+					for (const off of offs) { try { off(); } catch { /* ignore */ } }
+					browserMirror.dispose();
+					for (const mirror of subMirrors) mirror.dispose();
+				};
 			}));
 			/* 目录选择洞同样镜像一份。 */
 			const flowMirror = vkCreateMirror(ctx, "sidebar.workspaces.directoryFlow", VK.sidebar.dirflow);
@@ -2280,11 +2396,6 @@ window.__ModuleLoader__.load({
 				} catch (error) {
 					try { ctx.logger.warn("[dsh-vk-layout] 记忆系统入口隐藏失败：" + String(error)); } catch { /* ignore */ }
 				}
-				try {
-					vkSettingsTabs(ctx);
-				} catch (error) {
-					try { ctx.logger.warn("[dsh-vk-layout] 通用设置页内 tab 安装失败：" + String(error)); } catch { /* ignore */ }
-				}
 			} catch (error) {
 				try { ctx.logger.warn("[dsh-vk-layout] 下段命令行挂载失败：" + String(error)); } catch { /* ignore */ }
 			}
@@ -2553,293 +2664,6 @@ window.__ModuleLoader__.load({
 			return install;
 		})();
 
-		/* 「通用设置」页内 tab（口径 ③：通用 / Agent 预设 合成一页）。
-		   2026-09-29 重写：以前是把一条 DOM 插进官方正文容器再靠 1.2s 轮询补插，
-		   官方 React 一重渲染就把它冲掉（用户报「切 tab 卡、闪」）。现在照官方「插件」页
-		   自己的做法（settings.plugins.tab）——**注册一个 React 组件进官方 settings.general.item 槽**，
-		   位置、顺序、高亮全由官方排序渲染；我们只负责画 tab 与点它。零 DOM 插入、零轮询。 */
-		const vkSettingsTabs = (function () {
-			const ROWS = [
-				{ id: "general", label: "通用" },
-				{ id: "agent-presets", label: "Agent 预设" }
-			];
-			/** 官方分区按钮：自绘左栏已给它们盖了 data-vk-row 戳（没盖到时退回按文字找）。 */
-			function cellOf(id) {
-				try {
-					const stamped = document.querySelector("button[data-vk-row=\"" + id + "\"]");
-					if (stamped !== null) return stamped;
-					const want = id === "general" ? "通用设置" : "Agent 预设";
-					for (const b of Array.from(document.querySelectorAll("[role=dialog] nav button"))) {
-						if (String(b.textContent || "").trim() === want) return b;
-					}
-				} catch { /* ignore */ }
-				return null;
-			}
-			function activeCell() {
-				try {
-					const on = document.querySelector("[role=dialog] nav button[aria-current=\"true\"]");
-					if (on === null) return null;
-					const id = on.getAttribute("data-vk-row");
-					if (id === "general" || id === "agent-presets") return id;
-					const txt = String(on.textContent || "").trim();
-					if (txt === "通用设置") return "general";
-					if (txt === "Agent 预设") return "agent-presets";
-				} catch { /* ignore */ }
-				return null;
-			}
-			/**
-			 * 设置页内 tab（通用 / Agent 预设）——**照抄官方「插件」页那条 tab**。
-			 *
-			 * 官方那条在 `@deepseek-ai/dsh-client-ui-settings-plugins` 的 `PluginsSettingsSection`：
-			 *   · 容器 `className = pbvGtq_tabs`，`role="tablist"`，`aria-label`
-			 *   · 每个 tab `className = pbvGtq_tab`，`data-active={selected}`、`aria-selected`、
-			 *     `tabIndex = selected ? 0 : -1`、`id`/`aria-controls`
-			 *   · 下划线是 CSS `.pbvGtq_tab[data-active=true]:after` 画的，不是我们的类
-			 *   · 键盘 ←/→/Home/End 换选并 focus 到下一个 tab
-			 * 这里逐项照抄，连类名都用官方的（官方那支 CSS 已经注入在 <head>，不必再抄一份）。
-			 * 我们只多一件事：选中时切到对应的官方分区（它俩是官方两个独立分区，这点绕不开）。
-			 */
-			const TABS_CLASS = "pbvGtq_tabs";
-			const TAB_CLASS = "pbvGtq_tab";
-			/** 当前设置分区（general / agent-presets …）；不在官方 nav 里时给 null。 */
-			function useVKActiveSection() {
-				const [active, setActive] = react.useState(activeCell);
-				react.useEffect(() => {
-					const sync = () => {
-						const next = activeCell();
-						setActive((prev) => (prev === next ? prev : next));
-					};
-					sync();
-					/* 官方切分区会重建 nav；用只查 nav 那一格的小轮询同步高亮。
-					   曾经这里是 document.body 上的 subtree MutationObserver（连 class 属性一起看），
-					   流式输出时每个 token 都触发一遍 —— 就是用户报的「设置页卡」的一半原因。 */
-					const timer = window.setInterval(sync, 300);
-					return () => { try { window.clearInterval(timer); } catch { /* ignore */ } };
-				}, []);
-				return [active, setActive];
-			}
-			/** tab 本体：两个槽位共用同一份渲染，active / onPick 由外层给。 */
-			function VKSettingsTabRowBody(props) {
-				const active = props === undefined || props === null ? null : props.active;
-				const onPick = props === undefined || props === null ? null : props.onPick;
-				const refs = react.useRef([]);
-				return h("div", { className: TABS_CLASS, role: "tablist", "aria-label": "设置视图" },
-					ROWS.map((row, index) => h("button", {
-						key: row.id,
-						ref: (el) => { refs.current[index] = el; },
-						type: "button",
-						role: "tab",
-						"aria-selected": active === row.id,
-						"data-active": active === row.id ? "true" : void 0,
-						tabIndex: active === row.id ? 0 : -1,
-						className: TAB_CLASS,
-						onClick: () => { if (typeof onPick === "function") onPick(row.id); },
-						onKeyDown: (event) => {
-							let nextIndex;
-							if (event.key === "ArrowRight") nextIndex = (index + 1) % ROWS.length;
-							else if (event.key === "ArrowLeft") nextIndex = (index - 1 + ROWS.length) % ROWS.length;
-							else if (event.key === "Home") nextIndex = 0;
-							else if (event.key === "End") nextIndex = ROWS.length - 1;
-							else return;
-							event.preventDefault();
-							if (typeof onPick === "function") onPick(ROWS[nextIndex].id);
-							const target = refs.current[nextIndex];
-							if (target !== null && target !== void 0 && typeof target.focus === "function") target.focus();
-						}
-					}, row.label)));
-			}
-			/** 正文顶部那一份（挂 settings.general.item）：切到别的分区就不该看见这条 tab。 */
-			function VKSettingsTabRow() {
-				const [active, setActive] = useVKActiveSection();
-				if (active === null) return null;
-				return h(VKSettingsTabRowBody, { active: active, onPick: (id) => {
-					const cell = cellOf(id);
-					if (cell !== null) { try { cell.click(); } catch { /* ignore */ } }
-					setActive(id);
-				} });
-			}
-			/**
-			 * 「Agent 预设」分区里那条 tab —— 用**挂在 document.body 上的浮层**做。
-			 *
-			 * 官方只给 general 那一节开了 item 槽（`settings.general.item`，硬编码在
-			 * dsh-client-ui-settings-general 的 renderSlot 里）；「Agent 预设」是另一个独立
-			 * settings.section，正文里没有可注入的槽。
-			 *
-			 * 为什么不把节点插进正文里（前一版就是这么做的，用户看到「闪一下」）：React 提交时会清掉
-			 * 它管的容器里的外来节点（实测插进去 300~400ms 后节点已不在 DOM），只能等下一拍补插 ——
-			 * 那一拍就是用户看到的闪，而补插本身还会和 React 的提交互相触发。
-			 * 挂到 body 上的外来节点 React 不动，于是**一次都不用补插**。
-			 *
-			 * 位置：先给分区正文根用 inline padding 预留出这一行的高度（React 不接管这一格的 padding，
-			 * 所以预留不会塌），浮层就摆在那块空位上；类名、CSS 与「通用」页那条完全相同。
-			 */
-			/** 正文顶部那条 tab 占的高度：本体 37 + 自带的 2px 上边距。 */
-			const VK_TABS_RESERVE = 39;
-			const VK_TABS_RESERVE_ATTR = "data-vk-tabs-reserve";
-			const VK_TABS_RESERVE_PREV = "data-vk-tabs-reserve-prev";
-			/** 预留 / 释放正文顶部的空位（幂等；原值记在属性里，释放时还原）。 */
-			function vkReserveForTabs(root) {
-				if (root === null || root === void 0) return;
-				if (root.getAttribute(VK_TABS_RESERVE_ATTR) === "1") return;
-				try {
-					root.setAttribute(VK_TABS_RESERVE_PREV, String(root.style.paddingTop || ""));
-					root.style.paddingTop = VK_TABS_RESERVE + "px";
-					root.setAttribute(VK_TABS_RESERVE_ATTR, "1");
-				} catch { /* ignore */ }
-			}
-			function vkReleaseReserve() {
-				try {
-					for (const root of Array.from(document.querySelectorAll("[" + VK_TABS_RESERVE_ATTR + "]"))) {
-						root.style.paddingTop = root.getAttribute(VK_TABS_RESERVE_PREV) || "";
-						root.removeAttribute(VK_TABS_RESERVE_ATTR);
-						root.removeAttribute(VK_TABS_RESERVE_PREV);
-					}
-				} catch { /* ignore */ }
-			}
-			const VK_TABS_INJECT = "data-vk-tabs-injected";
-			/** 承载当前分区的容器（结构定位，不写死官方类名哈希）。 */
-			function vkSettingsOptions() {
-				try {
-					const dialog = document.querySelector("[role=dialog]");
-					const content = dialog === null ? null : dialog.lastElementChild;
-					if (content === null) return null;
-					const options = content.lastElementChild;
-					return options === null || options === content ? null : options;
-				} catch { return null; }
-			}
-			/** 当前分区正文的根盒（用来量位置、预留空位；不往里插任何节点）。 */
-			function vkSettingsSectionBody() {
-				try {
-					const slot = document.querySelector("[data-slot=\"settings.section\"]");
-					return slot === null ? null : slot.firstElementChild;
-				} catch { return null; }
-			}
-			function vkInjectedTabs() {
-				try { return document.querySelector("[" + VK_TABS_INJECT + "]"); } catch { return null; }
-			}
-			function vkSyncInjectedTabs(wrap) {
-				const active = activeCell();
-				for (const b of Array.from(wrap.children)) {
-					const on = b.getAttribute("data-vk-tab-id") === active;
-					b.setAttribute("aria-selected", on ? "true" : "false");
-					b.setAttribute("tabindex", on ? "0" : "-1");
-					if (on) b.setAttribute("data-active", "true"); else b.removeAttribute("data-active");
-				}
-			}
-			/** 浮层本体：外层是我们自己的 fixed 宿主，里面就是那条 tab（类名与官方「插件」页一致）。 */
-			function vkBuildInjectedTabs() {
-				const host = document.createElement("div");
-				host.setAttribute(VK_TABS_INJECT, "1");
-				host.style.cssText = "position:fixed;z-index:2147483000;display:none";
-				const wrap = document.createElement("div");
-				wrap.className = TABS_CLASS;
-				wrap.setAttribute("role", "tablist");
-				wrap.setAttribute("aria-label", "设置视图");
-				for (const row of ROWS) {
-					const b = document.createElement("button");
-					b.type = "button";
-					b.className = TAB_CLASS;
-					b.setAttribute("role", "tab");
-					b.setAttribute("data-vk-tab-id", row.id);
-					b.textContent = row.label;
-					b.addEventListener("click", () => {
-						const cell = cellOf(row.id);
-						if (cell !== null) { try { cell.click(); } catch { /* ignore */ } }
-						vkSyncInjectedTabs(wrap);
-					});
-					wrap.appendChild(b);
-				}
-				host.appendChild(wrap);
-				vkSyncInjectedTabs(wrap);
-				return host;
-			}
-			/** 幂等：算出现在该不该有这条 tab、该在哪，然后摆上去（只动 body 上我们自己的宿主）。 */
-			function vkPlaceInjectedTabs() {
-				const host = vkInjectedTabs();
-				const body = activeCell() === "agent-presets" ? vkSettingsSectionBody() : null;
-				if (body === null) {
-					vkReleaseReserve();
-					if (host !== null) { try { host.remove(); } catch { /* ignore */ } }
-					return;
-				}
-				vkReserveForTabs(body);
-				let node = host;
-				if (node === null) {
-					try { node = vkBuildInjectedTabs(); document.body.appendChild(node); } catch { return; }
-				}
-				const rect = body.getBoundingClientRect();
-				node.style.display = "block";
-				node.style.left = Math.round(rect.left) + "px";
-				node.style.top = Math.round(rect.top) + "px";
-				node.style.width = Math.round(rect.width) + "px";
-				const wrap = node.firstElementChild;
-				if (wrap !== null) vkSyncInjectedTabs(wrap);
-			}
-			function vkInstallInjectedTabs(ctx) {
-				let timer = null;
-				let obs = null;
-				let watched = null;
-				let raf = 0;
-				/** 滚动 / 改尺寸时重算位置（rAF 节流，避免每帧多次 getBoundingClientRect）。 */
-				const later = () => {
-					if (raf !== 0) return;
-					try {
-						raf = window.requestAnimationFrame(() => { raf = 0; try { vkPlaceInjectedTabs(); } catch { /* ignore */ } });
-					} catch { raf = 0; vkPlaceInjectedTabs(); }
-				};
-				/**
-				 * 进对话框就把观察器挂上（不等切到 Agent 预设）。
-				 *
-				 * 挂在哪很关键——实测（克隆，点击「Agent 预设」后 400ms 计数）：
-				 *   · 承载分区的容器 `.options` 的**直接孩子一个都没变**（childList 命中 0 次）；
-				 *   · 变的是**分区槽** `[data-slot=settings.section]` 的直接孩子（命中 1 次，点击后 **2ms**），
-				 *     槽元素本身跨分区复用（同一元素、同一父节点）。
-				 * 所以必须盯**槽**：盯错了就永远不触发，只能等 400ms 兜底那一拍补上——那正是用户看到的闪。
-				 * 观察器**只读** React 的 DOM（真正插入的浮层在 body 上），不会和 React 互相触发；
-				 * 只挂 childList，不碰属性、不做 subtree。
-				 */
-				const attach = (target) => {
-					if (obs !== null) { try { obs.disconnect(); } catch { /* ignore */ } }
-					watched = target;
-					if (target === null) { obs = null; return; }
-					try {
-						obs = new MutationObserver(() => { vkPlaceInjectedTabs(); });
-						obs.observe(target, { childList: true });
-					} catch { obs = null; }
-				};
-				const pump = () => {
-					if (vkSettingsOptions() === null) { attach(null); vkPlaceInjectedTabs(); return; }
-					const slot = document.querySelector("[data-slot=\"settings.section\"]");
-					const target = slot !== null && slot.isConnected === true ? slot : null;
-					if (watched !== target || (watched !== null && watched.isConnected !== true)) attach(target);
-					vkPlaceInjectedTabs();
-				};
-				try { timer = window.setInterval(pump, 400); pump(); } catch { /* 无定时器环境：放弃 */ }
-				try {
-					document.addEventListener("scroll", later, true);
-					window.addEventListener("resize", later);
-				} catch { /* ignore */ }
-				ctx.effect(() => () => {
-					try { window.clearInterval(timer); } catch { /* ignore */ }
-					if (obs !== null) { try { obs.disconnect(); } catch { /* ignore */ } }
-					try { document.removeEventListener("scroll", later, true); } catch { /* ignore */ }
-					try { window.removeEventListener("resize", later); } catch { /* ignore */ }
-					vkReleaseReserve();
-					const dead = vkInjectedTabs();
-					if (dead !== null) { try { dead.remove(); } catch { /* ignore */ } }
-				}, "dsh-vk-layout: settings tabs overlay");
-			}
-			function install(ctx) {
-				ctx.slots.inject("settings.general.item", () => ctx.slots.register({
-					name: "settings.general.item",
-					id: "vk-general-tabs",
-					order: -100,
-					locale: "common"
-				}, VKSettingsTabRow));
-				vkInstallInjectedTabs(ctx);
-			}
-			return install;
-		})();
 
 		exports.apply = apply;
 		exports.inject = ["slots"];

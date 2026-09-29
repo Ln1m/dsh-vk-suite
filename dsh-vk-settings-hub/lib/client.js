@@ -28,12 +28,16 @@ window.__ModuleLoader__.load({
 			skillSets: '<path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>',
 			/* 预留位里「由别的插件提供的设置页」统一用这个图标（区别于通用设置的官方齿轮） */
 			extra: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/>',
-			gear: '<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+			gear: '<circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>',
+			agent: '<rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4"/><path d="M9 12v1.5M15 12v1.5"/><path d="M9.5 16h5"/>'
 		};
 
 		/* ── 导航模型：id 对齐官方 settings.section 的 id；subs 是同一导航项内的子页 ── */
 		const NAV_MODEL = [
-			{ id: 'general', label: '通用设置', glyph: 'gear', official: true, subs: [{ id: 'general', label: '通用' }, { id: 'agent-presets', label: 'Agent 预设' }] },
+			{ id: 'general', label: '通用设置', glyph: 'gear', official: true },
+			/* 「Agent 预设」独立成一栏（用户口径 2026-09-29）：官方本来就是两个 settings.section，
+			   之前合成一页是自绘左栏 + 页内 tab 的硬凑，现按官方原样两条并列。 */
+			{ id: 'agent-presets', label: 'Agent 预设', glyph: 'agent' },
 			{ id: 'models', label: '模型', glyph: 'models' },
 			{ id: 'plugins', label: '插件', glyph: 'plugins' },
 			{ id: 'skills', label: 'Skill 管理', glyph: 'skills' },

@@ -1,6 +1,6 @@
 {
   "name": "dsh-vk-settings-hub",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "设置页导航中枢：接管官方设置左栏，正文仍由官方 shell 渲染。",
   "type": "module",
   "main": "lib/index.js",

@@ -17,7 +17,7 @@ Three-column layout skeleton plus the settings centre: slot contract, shell, set
 
 | Release | DSH line | Notes |
 |---|---|---|
-| `v0.1.1` | 0.1.7 | Features developed on the local DSH 0.1.7 line; this update |
+| `v0.1.2` | 0.1.7 | Features developed on the local DSH 0.1.7 line; this update |
 | `v0.1.0` | 0.1.6 | Last release of the DSH 0.1.6 line; stays usable, no further updates |
 
 ## Install
@@ -36,15 +36,19 @@ Or install the whole family on Windows PowerShell:
 Install straight from the release, no clone needed:
 
 ```sh
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.1/dsh-vk-contract-0.1.0.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.1/dsh-vk-layout-0.1.1.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.1/dsh-vk-settings-0.1.0.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.1/dsh-vk-settings-hub-0.1.1.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-contract-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-layout-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-hub-0.1.2.tgz"
 ```
 
 If the install fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` (a TLS-intercepting proxy; Node does not read the system CA store by default), run `$env:NODE_OPTIONS='--use-system-ca'` first.
 
 Restart the web instance afterwards. Each package directory carries its own README.
+
+## Screenshots
+
+![dsh-vk-layout](dsh-vk-layout/assets/vk-suite-layout.png)
 
 ## License
 
