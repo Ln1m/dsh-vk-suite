@@ -12,6 +12,7 @@
 | `dsh-vk-layout` | 布局骨架：左栏与右栏 Tab 宿主、设置宿主、浮层座位 |
 | `dsh-vk-settings` | 骨架自带的设置分区：Skill 管理、MCP 管理 |
 | `dsh-vk-settings-hub` | 设置中心：自绘左栏接管官方设置面板，含插件市场与启停管理两个 tab、ZIP 归档页 |
+| `dsh-usage-board` | 契约预留设置位里的用量看板：方格热力图、时段分布、峰谷占比、会话消耗排行 |
 
 ## 版本线
 
@@ -40,15 +41,18 @@ dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/down
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-layout-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-hub-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-usage-board-0.1.0.tgz"
 ```
 
 装的时候若报 `UNABLE_TO_VERIFY_LEAF_SIGNATURE`（国内出口证书注入，Node 默认不读系统证书库），先执行 `$env:NODE_OPTIONS='--use-system-ca'` 再装。
 
-装完重启 web 实例。每个包目录里还有它自己的 README。
+装完重启 web 实例。
 
 ## 界面
 
 ![dsh-vk-layout](dsh-vk-layout/assets/vk-suite-layout.png)
+
+![dsh-usage-board](dsh-usage-board/assets/dsh-usage-board.png)
 
 ## 许可
 

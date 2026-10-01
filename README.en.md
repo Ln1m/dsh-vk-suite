@@ -12,6 +12,7 @@ Three-column layout skeleton plus the settings centre: slot contract, shell, set
 | `dsh-vk-layout` | Layout shell: left/right tab hosts, settings host, overlay seats |
 | `dsh-vk-settings` | Settings pages owned by the skeleton: Skill management and MCP management |
 | `dsh-vk-settings-hub` | Settings centre: own left-column nav over the official panel, plugin market + enable/disable tabs, ZIP archive page |
+| `dsh-usage-board` | Usage board in the settings seat the contract reserves: heatmap, hour profile, peak/off-peak split, session ranking |
 
 ## Release lines
 
@@ -40,15 +41,18 @@ dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/down
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-layout-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-hub-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-usage-board-0.1.0.tgz"
 ```
 
 If the install fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` (a TLS-intercepting proxy; Node does not read the system CA store by default), run `$env:NODE_OPTIONS='--use-system-ca'` first.
 
-Restart the web instance afterwards. Each package directory carries its own README.
+Restart the web instance afterwards.
 
 ## Screenshots
 
 ![dsh-vk-layout](dsh-vk-layout/assets/vk-suite-layout.png)
+
+![dsh-usage-board](dsh-usage-board/assets/dsh-usage-board.png)
 
 ## License
 

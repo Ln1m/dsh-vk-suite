@@ -1,0 +1,8 @@
+# dsh-usage-board plugin patch: inserts the plugin row into the web profile roster.
+# The node half (exports ".") has no behaviour of its own; the `dsh.client`
+# declaration in package.json loads the browser half (exports "./client"), which
+# fills the settings seat reserved by dsh-vk-contract (vk.settings.extra) with the
+# usage board. Data comes from dsh-wallet's read-only /wallet/api/* routes.
+- insert:
+    - id: dsh-usage-board
+      name: 'dsh-usage-board'
