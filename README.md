@@ -40,7 +40,7 @@ dsh plugin --profile web add file:<本仓库>/dsh-vk-contract
 
 ```sh
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-contract-0.1.3.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-layout-0.1.3.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-layout-0.1.4.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-settings-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-settings-hub-0.1.2.tgz"
 dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-usage-board-0.1.0.tgz"

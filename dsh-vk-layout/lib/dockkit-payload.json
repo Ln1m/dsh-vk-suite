@@ -1,0 +1,62 @@
+{
+    "nsAnchor":  "function NS(e){",
+    "nsGuard":  "DockLayout requires one pane or two horizontally split panes",
+    "newNs":  "function NS(e){const{state:n,callbacks:o,preview:s}=e,a=j.useRef(),u={...o,onFocusTab:x=\u003e{a.current=Kt(n,x).activeTabId===x?void 0:{tabId:x,origin:document.activeElement},o.onFocusTab(x)}},m=S7(n,e.intents),TR=z=\u003ez.map(v=\u003e`minmax(0, ${v}fr)`).join(\" 0px \"),KI=(pane,cell)=\u003e{const out=[];for(const id of pane.tabs){const tab=n.tabs[id];if(tab!==void 0)out.push(l.jsx(TS,{...e,callbacks:u,tab:tab,pane:pane,column:cell.idx,cell:cell,floats:m,focusRequest:a},id))}if(out.length===0)out.push(l.jsx(\"div\",{className:xe.emptyTabHost,\"data-dockkit-empty\":!0,style:{gridColumn:cell.col,gridRow:cell.row},children:l.jsx(b7,{state:n,pane:pane,callbacks:o})},pane.id));return out},DIV=(node,i,row)=\u003el.jsx(\"div\",{className:row?he(xe.divider,xe.tabLayoutDivider):xe.divider,\"data-dockkit-divider\":`${node.id}:${i}`,style:row?{gridColumn:(i+1)*2,gridRow:1}:{gridColumn:1,gridRow:(i+1)*2,zIndex:\"calc(var(--dsh-dockkit-dock-layer, 10) + 1)\",pointerEvents:\"auto\"},onPointerDown:ev=\u003e{o.onDividerPressed(node.id,i,ev)}},`${node.id}:${i}`),SP=node=\u003e{const sizes=s!==void 0\u0026\u0026s.splitId===node.id?s.sizes:node.sizes,row=node.axis===\"row\",items=[];node.children.forEach((childId,i)=\u003e{if(i\u003e0)items.push(DIV(node,i-1,row));const child=_n(n,childId),t=i*2+1;if(child.kind===\"pane\"){const cell=row?{col:t,row:1,idx:i}:{col:1,row:t,idx:i};for(const it of KI(child,cell))items.push(it)}else{const sub=SP(child),cc=row?{col:t,row:1}:{col:1,row:t};items.push(l.jsx(\"div\",{className:sub.row?xe.tabLayout:he(xe.tabLayout,xe.splitColumn),\"data-dockkit-split\":child.id,style:sub.row?{gridColumn:cc.col,gridRow:cc.row,gridTemplateColumns:TR(sub.sizes)}:{gridColumn:cc.col,gridRow:cc.row,gridTemplateColumns:\"minmax(0, 1fr)\",gridTemplateRows:TR(sub.sizes)},children:sub.items},child.id))}});return{sizes:sizes,row:row,items:items}},root=_n(n,n.rootId),fl=[];for(const fid of n.floats??[]){const pane=Pe(n,fid);if(pane===void 0)continue;for(const id of pane.tabs){const tab=n.tabs[id];if(tab!==void 0)fl.push(l.jsx(TS,{...e,callbacks:u,tab:tab,pane:pane,column:0,floats:m,focusRequest:a},id))}}if(root.kind===\"pane\")return l.jsxs(\"div\",{className:xe.tabLayout,style:{gridTemplateColumns:\"minmax(0, 1fr)\"},children:[...KI(root,{col:1,row:1,idx:0}),...fl]});const parts=SP(root);return l.jsxs(\"div\",{className:parts.row?xe.tabLayout:he(xe.tabLayout,xe.splitColumn),\"data-dockkit-split\":root.id,style:parts.row?{gridTemplateColumns:TR(parts.sizes)}:{gridTemplateColumns:\"minmax(0, 1fr)\",gridTemplateRows:TR(parts.sizes)},children:[...parts.items,...fl]})}",
+    "tsParamsOld":  "function TS({state:e,callbacks:n,intents:o,tab:s,pane:a,column:u,floats:f,focusRequest:h,keepMounted:g,active:m=!0}){",
+    "tsParamsNew":  "function TS({state:e,callbacks:n,intents:o,tab:s,pane:a,column:u,cell:dkCell,floats:f,focusRequest:h,keepMounted:g,active:m=!0}){",
+    "tsStyleOld":  "style:{gridColumn:w?1:u*2+1,gridRow:1,order:w?H:0}",
+    "tsStyleNew":  "style:{gridColumn:w?1:dkCell?dkCell.col:u*2+1,gridRow:w?1:dkCell?dkCell.row:1,order:w?H:0}",
+    "capOld":  "function ks(e){return G8(e)\u003c4}",
+    "capNew":  "function ks(e){return G8(e)\u003c8}",
+    "maxOld":  "const rS=4,Y0=.12",
+    "maxNew":  "const rS=8,Y0=.12",
+    "pnAnchor":  "}) : [];",
+    "pnNew":  "}).map((op) =\u003e op.type === \"split\" ? Object.assign({}, op, { axis: \"column\" }) : op) : [];",
+    "rules":  [
+                  {
+                      "n":  "dropZones",
+                      "a":  "dropZones: \"horizontal\",",
+                      "b":  "dropZones: \"edges\","
+                  },
+                  {
+                      "n":  "zone-guard",
+                      "a":  "if (zone === \"top\" || zone === \"bottom\") return [];",
+                      "b":  ""
+                  },
+                  {
+                      "n":  "dropTab-budget",
+                      "a":  "dockPaneIds)(state).length \u003e= 2) return [];",
+                      "b":  "dockPaneIds)(state).length \u003e= 8) return [];"
+                  },
+                  {
+                      "n":  "splitPane-guard",
+                      "a":  "dockPaneIds)(state).length \u003e= 2 ||",
+                      "b":  "dockPaneIds)(state).length \u003e= 8 ||"
+                  },
+                  {
+                      "n":  "canSplit-prop",
+                      "a":  "dockPaneIds)(surface.layout).length \u003c 2,",
+                      "b":  "dockPaneIds)(surface.layout).length \u003c 8,"
+                  },
+                  {
+                      "n":  "preferNewPane",
+                      "a":  "dockPaneIds)(surface.layout).length \u003c 2 \u0026\u0026",
+                      "b":  "dockPaneIds)(surface.layout).length \u003c 8 \u0026\u0026"
+                  },
+                  {
+                      "n":  "budget-reason",
+                      "a":  "dockPaneIds)(layout).length \u003e= 2) return \"budget\";",
+                      "b":  "dockPaneIds)(layout).length \u003e= 8) return \"budget\";"
+                  },
+                  {
+                      "n":  "split-command",
+                      "a":  "dockPaneIds)(layout).length \u003e= 2 ||",
+                      "b":  "dockPaneIds)(layout).length \u003e= 8 ||"
+                  },
+                  {
+                      "n":  "persist-validate",
+                      "a":  "if (host !== \"dock\" || id !== layout.rootId || entry.axis !== \"row\" || entry.children.length !== 2 || entry.children.length !== entry.sizes.length",
+                      "b":  "if (host !== \"dock\" || entry.children.length !== entry.sizes.length"
+                  }
+              ]
+}
