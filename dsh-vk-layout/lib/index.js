@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, appendFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, appendFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -8,6 +8,8 @@ export const name = 'dsh-vk-layout';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.env.DSH_ROOT || join(homedir(), 'DeepSeek_harness');
 const LOG = join(ROOT, 'logs', 'vk-layout-dockkit.log');
+const BACKUPS = join(ROOT, 'backups');
+const BACKUP_PREFIX = 'dsh-dockkit-2axis-';
 const PAYLOAD = JSON.parse(readFileSync(join(HERE, 'dockkit-payload.json'), 'utf8'));
 const SHELL_PKG = '@deepseek-ai/dsh-web-frontend';
 const SIDEBAR_PKG = '@deepseek-ai/dsh-client-ui-sidebar-right';
@@ -109,6 +111,13 @@ function stamp() {
   return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
 }
 
+function newestBackup() {
+  let names;
+  try { names = readdirSync(BACKUPS); } catch { return null; }
+  const hits = names.filter((n) => n.startsWith(BACKUP_PREFIX) && statSync(join(BACKUPS, n)).isDirectory()).sort();
+  return hits.length === 0 ? null : join(BACKUPS, hits[hits.length - 1]);
+}
+
 export function patchDockkit(opts) {
   const shellFile = opts.shellFile;
   const sidebarFile = opts.sidebarFile;
@@ -131,16 +140,30 @@ export function patchDockkit(opts) {
   return { status: 'patched', shell: needShell, sidebar: needSidebar, backup };
 }
 
-export function apply() {
+export function revertDockkit(opts) {
+  const backup = opts.backup === undefined ? newestBackup() : opts.backup;
+  if (backup === null || !existsSync(backup)) return { status: 'no-backup' };
+  const restored = [];
+  const shellFile = opts.shellFile;
+  const sidebarFile = opts.sidebarFile;
+  const fromShell = join(backup, 'shell-index.js');
+  const fromSidebar = join(backup, 'sidebar-right.client.js');
+  if (shellFile !== null && existsSync(shellFile) && existsSync(fromShell)) { copyFileSync(fromShell, shellFile); restored.push('shell'); }
+  if (sidebarFile !== null && existsSync(sidebarFile) && existsSync(fromSidebar)) { copyFileSync(fromSidebar, sidebarFile); restored.push('sidebar'); }
+  if (restored.length === 0) return { status: 'nothing-to-restore', backup };
+  return { status: 'reverted', backup, restored };
+}
+
+export function apply(ctx, config) {
+  const revert = (config !== undefined && config !== null && config.revert === true) || process.env.DSH_DOCKKIT_REVERT === '1';
   let report;
   try {
-    report = patchDockkit({
-      shellFile: shellTarget(),
-      sidebarFile: sidebarTarget(),
-      backupRoot: join(ROOT, 'backups', 'dsh-dockkit-2axis-' + stamp()),
-    });
+    const opts = { shellFile: shellTarget(), sidebarFile: sidebarTarget() };
+    report = revert
+      ? revertDockkit(opts)
+      : patchDockkit({ shellFile: opts.shellFile, sidebarFile: opts.sidebarFile, backupRoot: join(BACKUPS, BACKUP_PREFIX + stamp()) });
   } catch (e) {
     report = { status: 'error', detail: String((e && e.message) || e) };
   }
-  if (report.status !== 'already') log('dockkit-2axis ' + JSON.stringify(report));
+  if (revert || report.status !== 'already') log((revert ? 'revert ' : 'patch ') + JSON.stringify(report));
 }
