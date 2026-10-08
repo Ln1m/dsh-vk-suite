@@ -13,12 +13,14 @@ Three-column layout skeleton plus the settings centre: slot contract, shell, set
 | `dsh-vk-settings` | Settings pages owned by the skeleton: Skill management and MCP management |
 | `dsh-vk-settings-hub` | Settings centre: own left-column nav over the official panel, plugin market + enable/disable tabs, ZIP archive page |
 | `dsh-usage-board` | Usage board in the settings seat the contract reserves: heatmap, hour profile, peak/off-peak split, session ranking |
+| `dsh-motion` | Always-on track transition for the three-column skeleton plus settings enter/exit, injected as pure CSS |
 
 ## Release lines
 
 | Release | DSH line | Notes |
 |---|---|---|
-| `v0.1.2` | 0.1.7 | Features developed on the local DSH 0.1.7 line; this update |
+| `v0.1.3` | 0.1.7 | This sync: right-column two-axis docking, plus this batch of skeleton and column changes |
+| `v0.1.2` | 0.1.7 | Previous release of the 0.1.7 line |
 | `v0.1.0` | 0.1.6 | Last release of the DSH 0.1.6 line; stays usable, no further updates |
 
 ## Install
@@ -37,11 +39,12 @@ Or install the whole family on Windows PowerShell:
 Install straight from the release, no clone needed:
 
 ```sh
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-contract-0.1.2.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-layout-0.1.2.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-0.1.2.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-vk-settings-hub-0.1.2.tgz"
-dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.2/dsh-usage-board-0.1.0.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-contract-0.1.3.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-layout-0.1.3.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-settings-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-vk-settings-hub-0.1.2.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-usage-board-0.1.0.tgz"
+dsh plugin --profile web add "https://github.com/Ln1m/dsh-vk-suite/releases/download/v0.1.3/dsh-motion-0.1.0.tgz"
 ```
 
 If the install fails with `UNABLE_TO_VERIFY_LEAF_SIGNATURE` (a TLS-intercepting proxy; Node does not read the system CA store by default), run `$env:NODE_OPTIONS='--use-system-ca'` first.

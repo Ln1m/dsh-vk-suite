@@ -32,7 +32,8 @@ window.__ModuleLoader__.load({
       },
       input: {
         left: 'vk.input.left',
-        right: 'vk.input.right'
+        right: 'vk.input.right',
+        dock: 'vk.input.dock'
       },
       session: {
         headerLeft: 'vk.session.header.left',
@@ -79,6 +80,10 @@ window.__ModuleLoader__.load({
       /* ═══ 二、中间会话栏 ═══ */
       { area: 'input', id: null, slot: VK.input.left, kind: 'single', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.left'] },
       { area: 'input', id: null, slot: VK.input.right, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.input.dock'] },
+      /* 输入框上方那一条「横排共享行」：骨架渲染成宿主行（同宽上限 + 自动换行 + 6px 间距），
+         各插件按 order 注册自己的分区，彼此不碰对方的 DOM/CSS。
+         技能档 pill（order 10）、拓展栏眼睛（order 20）都落这里。 */
+      { area: 'input', id: null, slot: VK.input.dock, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-skill-sets / dsh-rightpane-eyes', origin: 'vk-new', legacy: [] },
       { area: 'session', id: null, slot: VK.session.headerLeft, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['conversation.session.header.actions'] },
       { area: 'session', id: null, slot: VK.session.headerRight, kind: 'list', scope: 'session', pane: false, label: null, order: null, provider: 'dsh-restart-button', origin: 'official-alias', legacy: ['conversation.session.header.utilities', 'conversation.session.header.corner'] },
 
@@ -90,7 +95,7 @@ window.__ModuleLoader__.load({
       /* ═══ 四、设置页 ═══ */
       { area: 'settings', id: 'skills', slot: VK.settings.skills, kind: 'list', scope: 'root', pane: true, label: 'Skill 管理', order: 20, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=skills)'] },
       { area: 'settings', id: 'mcp', slot: VK.settings.mcp, kind: 'list', scope: 'root', pane: true, label: 'MCP 管理', order: 30, provider: 'dsh-vk-settings', origin: 'official-alias', legacy: ['settings.section(id=mcp)'] },
-      { area: 'settings', id: 'extra', slot: VK.settings.extra, kind: 'list', scope: 'root', pane: true, label: '扩展', order: 40, provider: null, origin: 'vk-new', legacy: [] },
+      { area: 'settings', id: 'extra', slot: VK.settings.extra, kind: 'list', scope: 'root', pane: true, label: '用量', order: 40, provider: null, origin: 'vk-new', legacy: [] },
 
       /* ═══ 五、帧级 ═══ */
       { area: 'overlay', id: null, slot: VK.overlay, kind: 'list', scope: 'root', pane: false, label: null, order: null, provider: null, origin: 'official-alias', legacy: ['shell.overlay'] },
@@ -135,6 +140,7 @@ window.__ModuleLoader__.load({
     /* ── 唯一内容注册 API ─────────────────────────────────────── */
     /**
      * 往已登记槽投递内容。写法对文件栏 / 任务栏 / 功能栏完全一致。
+body{--vk-accent:var(--dsw-alias-accent,var(--dsw-alias-state-business-primary));--vk-accent-ring:color-mix(in srgb,var(--vk-accent) 22%,transparent);--vk-accent-soft:color-mix(in srgb,var(--vk-accent) 12%,transparent);--vk-ok:#73c991;--vk-danger:var(--dsw-alias-state-error-primary,#f14c4c);--vk-danger-soft:color-mix(in srgb,var(--vk-danger) 35%,transparent);--vk-fg:var(--dsw-alias-label-primary);--vk-fg2:var(--dsw-alias-label-secondary);--vk-fg3:var(--dsw-alias-label-tertiary);--vk-line:var(--dsw-alias-border-l1);--vk-line2:var(--dsw-alias-border-l2);--vk-bg-hover:var(--dsw-alias-interactive-bg-hover);--vk-r-xs:4px;--vk-r-sm:6px;--vk-r-md:8px;--vk-r-lg:12px;--vk-r-pill:999px;--vk-fs-xs:11px;--vk-fs-sm:12px;--vk-fs-md:13px;--vk-fs-lg:14px;--vk-dur:.12s;--vk-ease:cubic-bezier(.2,.7,.3,1);--vk-fade:background-color var(--vk-dur) var(--vk-ease),color var(--vk-dur) var(--vk-ease),border-color var(--vk-dur) var(--vk-ease),opacity var(--vk-dur) var(--vk-ease);--vk-ring:0 0 0 2px var(--vk-accent-ring);}
      * @param {object} ctx 客户端插件上下文（含 slots 服务）
      * @param {{slot:string,id:string,order?:number,label?:string|Function,component:Function}} spec
      * @returns {() => void} 幂等 disposer

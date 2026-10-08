@@ -55,13 +55,13 @@ window.__ModuleLoader__.load({
 
 		/* ── 样式 ─────────────────────────────────────────────────── */
 		const CSS = [
-			":root,body{--vk-accent:var(--dsw-alias-accent,var(--dsw-alias-state-business-primary));--vk-accent-ring:color-mix(in srgb,var(--vk-accent) 22%,transparent);--vk-accent-soft:color-mix(in srgb,var(--vk-accent) 12%,transparent)}",
+			"body{--vk-accent:var(--dsw-alias-accent,var(--dsw-alias-state-business-primary));--vk-accent-ring:color-mix(in srgb,var(--vk-accent) 22%,transparent);--vk-accent-soft:color-mix(in srgb,var(--vk-accent) 12%,transparent);--vk-ok:#73c991;--vk-danger:var(--dsw-alias-state-error-primary,#f14c4c);--vk-danger-soft:color-mix(in srgb,var(--vk-danger) 35%,transparent);--vk-fg:var(--dsw-alias-label-primary);--vk-fg2:var(--dsw-alias-label-secondary);--vk-fg3:var(--dsw-alias-label-tertiary);--vk-line:var(--dsw-alias-border-l1);--vk-line2:var(--dsw-alias-border-l2);--vk-bg-hover:var(--dsw-alias-interactive-bg-hover);--vk-r-xs:4px;--vk-r-sm:6px;--vk-r-md:8px;--vk-r-lg:12px;--vk-r-pill:999px;--vk-fs-xs:11px;--vk-fs-sm:12px;--vk-fs-md:13px;--vk-fs-lg:14px;--vk-dur:.12s;--vk-ease:cubic-bezier(.2,.7,.3,1);--vk-fade:background-color var(--vk-dur) var(--vk-ease),color var(--vk-dur) var(--vk-ease),border-color var(--vk-dur) var(--vk-ease),opacity var(--vk-dur) var(--vk-ease);--vk-ring:0 0 0 2px var(--vk-accent-ring);}:root,body{--vk-accent:var(--dsw-alias-accent,var(--dsw-alias-state-business-primary));--vk-accent-ring:color-mix(in srgb,var(--vk-accent) 22%,transparent);--vk-accent-soft:color-mix(in srgb,var(--vk-accent) 12%,transparent)}",
 			".vk_areaHost{width:100%;height:100%;display:flex;flex-direction:column;min-height:0}",
 			".vk_paneStack{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}",
 			".vk_paneSlot{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}",
 			".vk_paneSlot:not(.vk_paneSlotActive){display:none}","[data-vk-pane=extensions]{overflow-y:auto}",
 			".vk_tabBar{display:flex;align-items:stretch;flex:none;min-width:0;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-sidebar-fill);container-type:inline-size}",
-			".vk_tabBtn{appearance:none;border:none;background:none;cursor:pointer;color:var(--dsw-alias-label-secondary);padding:7px 12px;font-size:12px;line-height:16px;font-family:inherit;position:relative;border-bottom:2px solid transparent;transition:color .12s,background-color .12s,border-color .12s;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}",
+			".vk_tabBtn{appearance:none;border:none;background:none;cursor:pointer;color:var(--dsw-alias-label-secondary);padding:7px 12px;font-size:var(--vk-fs-sm);line-height:16px;font-family:inherit;position:relative;border-bottom:2px solid transparent;transition:color .12s,background-color .12s,border-color .12s;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}",
 			".vk_tabBtn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}",
 			".vk_tabBtnActive{color:var(--dsw-alias-label-primary);border-bottom-color:var(--vk-accent)}",
 			".vk_tabGlyph{display:none;flex:none}",
@@ -88,12 +88,12 @@ window.__ModuleLoader__.load({
 			// （逐字取自 @deepseek-ai/dsh-client-ui-settings-plugins 的 PluginsSettingsSection.module.css；
 			//  官方那支 CSS 通常已注入，这里作为兜底，保证样式不会塌）
 			".pbvGtq_tabs{border-bottom:.5px solid var(--dsw-alias-border-l2);align-items:flex-end;gap:22px;margin-top:2px;display:flex}",
-			".pbvGtq_tab{color:var(--dsw-alias-label-tertiary);font:inherit;cursor:pointer;background:0 0;border:0;padding:7px 1px 9px;font-size:13px;line-height:20px;position:relative}",
+			".pbvGtq_tab{color:var(--dsw-alias-label-tertiary);font:inherit;cursor:pointer;background:0 0;border:0;padding:7px 1px 9px;font-size:var(--vk-fs-md);line-height:20px;position:relative}",
 			".pbvGtq_tab:hover,.pbvGtq_tab[data-active=true]{color:var(--dsw-alias-label-primary)}",
 			".pbvGtq_tab[data-active=true]:after{background:var(--dsw-alias-label-primary);content:\"\";border-radius:2px 2px 0 0;height:2px;position:absolute;bottom:-1px;left:0;right:0}",
 			".vk_tabBtnIcon{width:26px;padding:0;justify-content:center}",
 			".vk_rail{display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px}",
-			".vk_railBtn{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:38px;height:38px;border-radius:9px;color:var(--dsw-alias-label-secondary);display:flex;align-items:center;justify-content:center;position:relative;transition:background-color .12s,color .12s,transform .08s}",
+			".vk_railBtn{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:38px;height:38px;border-radius:var(--vk-r-md);color:var(--dsw-alias-label-secondary);display:flex;align-items:center;justify-content:center;position:relative;transition:background-color .12s,color .12s,transform .08s}",
 			".vk_railBtn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
 			".vk_railBtn:active{transform:scale(.93)}",
 			".vk_railBtnActive{background:var(--vk-accent-soft);color:var(--vk-accent)}",
@@ -104,11 +104,14 @@ window.__ModuleLoader__.load({
 			// 输入框上方整宽一行（官方 conversation.input.dock）的宿主：整宽块，内容自己决定高度，
 			// 展开的技能档抽屉把下面的输入卡片往下推，不会被 scrollBody 的 overflow:auto 裁掉。
 			".vk_dockHost{display:block;width:100%;min-width:0;overflow:visible}",
-			".vk_empty{padding:32px 20px;font-size:12.5px;line-height:2;color:var(--dsw-alias-label-tertiary);text-align:center;white-space:pre-wrap}",
+			// 输入框上方那一条「横排共享行」（契约 vk.input.dock）：骨架给几何（与输入卡片同宽上限、居中），
+			// 各插件注册进来的条目按 order 从左到右排、放不下自动换行；空行整块不渲染。
+			".vk_dockRow{box-sizing:border-box;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;width:calc(100% - 2 * var(--dsh-composer-side-clearance,16px));max-width:var(--dsh-composer-card-max-width,780px);margin:0 auto 8px;min-width:0;overflow:visible}",
+			".vk_empty{padding:32px 20px;font-size:var(--vk-fs-sm);line-height:2;color:var(--dsw-alias-label-tertiary);text-align:center;white-space:pre-wrap}",
 			".vk_tabBtn:focus-visible,.vk_railBtn:focus-visible{outline:2px solid var(--vk-accent-ring);outline-offset:-2px}",
 			".vk_seatRow{display:flex;flex-direction:column;align-items:stretch;gap:0;flex:none}",
 			".vk_seatSlot{display:flex;flex-direction:column;align-items:stretch;min-width:0;width:100%}",
-			".vk_seatToggle{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:28px;height:28px;border-radius:7px;color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,color .12s}",
+			".vk_seatToggle{appearance:none;border:none;background:none;cursor:pointer;box-sizing:border-box;padding:0;margin:0;line-height:1;width:28px;height:28px;border-radius:var(--vk-r-sm);color:var(--dsw-alias-label-secondary);display:inline-flex;align-items:center;justify-content:center;transition:background-color .12s,color .12s}",
 			".vk_seatToggle:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
 			".vk_seatToggleOn{color:var(--vk-accent)}",
 			".vk_tabTail{display:flex;align-items:center;gap:2px;padding-right:4px}",
@@ -404,6 +407,19 @@ window.__ModuleLoader__.load({
 				const body = renderSlot(slot, {});
 				if (body === undefined || body === null) return null;
 				return h("div", { className: "vk_dockHost", "data-vk-dock": slot }, body);
+			};
+		}
+		/** 输入框上方那一条「横排共享行」的宿主（契约 vk.input.dock）。
+		 *  与 makeDockHost 的区别：这里给的是**行**几何（同宽上限 + 居中 + 横排换行 + 6px 间距），
+		 *  每个注册进来的条目都是行内的一个分区，各自按内容定宽；整行没有任何条目时不渲染。
+		 *  技能档 pill 与拓展栏眼睛都挂这条槽，因此它们天然同一行、互不覆盖对方的 DOM/CSS。 */
+		function makeDockRowHost(slot) {
+			return function VKComposerDockRowHost(props) {
+				const renderSlot = props === undefined || props === null ? undefined : props.renderSlot;
+				if (typeof renderSlot !== "function") return null;
+				const body = renderSlot(slot, {});
+				if (body === undefined || body === null) return null;
+				return h("div", { className: "vk_dockRow", "data-vk-dock-row": slot }, body);
 			};
 		}
 		/** 右栏栏目正文：官方 keyed 槽给宿主下发 tab 上下文（useTabInfo 等），原样透传给槽内容。 */
@@ -734,25 +750,22 @@ window.__ModuleLoader__.load({
 		}
 
 		/* ── 主页标签（开始页）────────────────────────────────────
-		   `replaceTab` 在官方 place() 里是一个 **tabId**，不是一个布尔量。调用方想表达的是
-		   「把这列里的开始页换掉」，所以这里先把主页标签找出来：guide 类型，或任何内容地址落在
-		   `sidebar://` 名下的页标签（开始页就是官方用这个 scheme 记的）。资源标签一律不算。 */
+		   `replaceTab` 在官方 **服务层** place() 里是一个 tabId（`layout.tabs[placement.replaceTab]`），
+		   不是布尔量；把 `true` 翻成 tabId 这一步只有官方的页级 actions（tab.actions.openTab）会做。
+		   这里替官方补上：只有**当前活跃页**就是开始页（guide）时才顶替它——与官方 openTabFromTarget
+		   同口径（`tab?.kind === "guide" ? { replaceTab: tab.id } : {}`），别的页在前台时不抢位置。
+		   实测教训（2026-10-01）：旧写法把 `sr.mounted` 当函数调（它是 ObservableSnapshot，只有
+		   getSnapshot），永远解析不到主页标签，`replaceTab: true` 静默退化成「再开一个标签」；
+		   而 `contentId` 以 `sidebar://` 开头是**每个页标签**的记法（`sidebar://<kind>`），不是开始页特征。 */
 		function vkIsHomeTab(tab) {
 			if (tab === void 0 || tab === null) return false;
-			if (tab.kind === "guide") return true;
-			return typeof tab.contentId === "string" && tab.contentId.indexOf("sidebar://") === 0;
+			return tab.kind === "guide" || tab.contentId === "sidebar://guide";
 		}
 		function vkHomeTabId(sr) {
 			try {
-				const surface = typeof sr.mounted === "function" ? sr.mounted() : void 0;
-				const layout = surface === void 0 || surface === null ? void 0 : surface.layout;
-				if (layout === void 0 || layout === null) return void 0;
-				const tabs = layout.tabs === void 0 || layout.tabs === null ? {} : layout.tabs;
-				const pane = layout.nodes === void 0 || layout.nodes === null ? void 0 : layout.nodes[layout.activePaneId];
-				const ids = pane !== void 0 && pane !== null && Array.isArray(pane.tabs) ? pane.tabs : [];
-				for (const id of ids) if (vkIsHomeTab(tabs[id])) return id;
-				for (const id of Object.keys(tabs)) if (vkIsHomeTab(tabs[id])) return id;
-			} catch { /* 读不到布局就当没有主页标签 */ }
+				const active = typeof sr.active === "function" ? sr.active() : void 0;
+				if (vkIsHomeTab(active)) return active.id;
+			} catch { /* 没有挂载面时 active() 不返回：按「没有主页标签」处理 */ }
 			return void 0;
 		}
 		/** `replaceTab: true` 解析成主页标签 id；解析不到就退化成普通打开（再开一个标签）。 */
@@ -761,6 +774,14 @@ window.__ModuleLoader__.load({
 			if (replaceTab !== true) return [address];
 			const home = vkHomeTabId(sr);
 			return home === void 0 ? [address] : [address, { replaceTab: home }];
+		}
+		/** 页级 openTab 的落位选项：与 vkOpenArgs 同口径，把「顶替开始页」翻成官方要的 tabId。 */
+		function vkPlacement(sr, replaceTab) {
+			if (replaceTab === void 0 || replaceTab === null || replaceTab === false) return {};
+			const home = typeof replaceTab === "string" && replaceTab.length > 0
+				? replaceTab
+				: (replaceTab === true ? vkHomeTabId(sr) : void 0);
+			return home === void 0 ? {} : { replaceTab: home };
 		}
 
 		/* ── 三个中立服务 ─────────────────────────────────────────── */
@@ -966,14 +987,15 @@ window.__ModuleLoader__.load({
 			}, makeSeatHost(VK.input.left)));
 
 			/* 输入框上方整宽一行：官方 conversation.input.dock（list / session）。
-			   技能档 pill 是按「整宽一行 + 展开时在流内撑开」设计的组件，挂这条槽才对：宽度对齐输入卡片、
-			   展开把卡片往下推。挂在工具行座位里时宽度被压成 0、向下展开又被裁掉（2026-09-26 实测）。 */
+			   骨架在这里给一条**横排共享行**（契约 vk.input.dock）：技能档 pill、拓展栏眼睛等各自注册成一个分区，
+			   同一行从左到右排、放不下换行；谁的 DOM/CSS 都不用去动别人。整行空着时什么都不渲染。
+			   （旧写法是把 vk.input.right 整块渲染出来，条目各自给几何，才会出现"各占一行、宽窄不一"。） */
 			ctx.slots.inject("conversation.input.dock", () => ctx.slots.register({
 				name: "conversation.input.dock",
 				id: "vk-input-dock",
 				order: 30,
-				children: childMap("input", [VK.input.right])
-			}, makeDockHost(VK.input.right)));
+				children: childMap("input", [VK.input.dock])
+			}, makeDockRowHost(VK.input.dock)));
 
 			/* 会话头右上角：single 槽，同上一篇取 -2 拿下（官方那条就渲染不出来，避免两颗重复按钮）。 */
 			ctx.slots.inject("conversation.session.header.corner", () => ctx.slots.register({
@@ -1067,7 +1089,7 @@ window.__ModuleLoader__.load({
 				// 分隔**不靠样式表**：上半让位走 `右栏列.style.paddingBottom = <px>`（JS 内联），
 				// 面板高度也全部内联，CSS 只管面板内部的观感，不做任何尺寸决策。
 				// 顶栏第 4 颗按钮（与官方两颗、自研拓展栏开关并排）
-				".vk_cmdChromeBtn{appearance:none;border:none;background:none;cursor:pointer;width:28px;height:28px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0;color:var(--dsw-alias-label-secondary);transition:background-color .12s,color .12s,transform .08s}",
+				".vk_cmdChromeBtn{appearance:none;border:none;background:none;cursor:pointer;width:28px;height:28px;border-radius:var(--vk-r-pill);display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0;color:var(--dsw-alias-label-secondary);transition:background-color .12s,color .12s,transform .08s}",
 				".vk_cmdChromeBtn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
 				".vk_cmdChromeBtn:active{transform:scale(.94)}",
 				".vk_cmdChromeBtnOn{color:var(--vk-accent)}",
@@ -1076,11 +1098,11 @@ window.__ModuleLoader__.load({
 				".vk_cmdHandle::after{content:'';position:absolute;left:0;right:0;top:3px;height:2px;background:transparent;transition:background-color .12s}",
 				".vk_cmdHandle:hover::after,.vk_cmdHandle[data-dragging]::after{background:var(--vk-accent)}",
 				".vk_cmdHead{display:flex;align-items:center;gap:6px;flex:none;height:30px;padding:0 6px 0 10px;border-bottom:1px solid var(--dsw-alias-border-l1)}",
-				".vk_cmdTitle{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--dsw-alias-label-secondary);flex:none}",
-				".vk_cmdCwd{flex:1;min-width:0;font-size:11px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:ui-monospace,'Cascadia Mono',Consolas,monospace}",
-				".vk_cmdBadge{flex:none;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary);white-space:nowrap}",
+				".vk_cmdTitle{display:inline-flex;align-items:center;gap:5px;font-size:var(--vk-fs-sm);color:var(--dsw-alias-label-secondary);flex:none}",
+				".vk_cmdCwd{flex:1;min-width:0;font-size:var(--vk-fs-xs);color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:ui-monospace,'Cascadia Mono',Consolas,monospace}",
+				".vk_cmdBadge{flex:none;font-size:var(--vk-fs-xs);padding:1px 7px;border-radius:var(--vk-r-pill);background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary);white-space:nowrap}",
 				".vk_cmdDiag{flex:none;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-family:ui-monospace,'Cascadia Mono',Consolas,monospace;opacity:.85}",
-				".vk_cmdIconBtn{appearance:none;border:none;background:none;cursor:pointer;flex:none;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;padding:0;color:var(--dsw-alias-label-secondary)}",
+				".vk_cmdIconBtn{appearance:none;border:none;background:none;cursor:pointer;flex:none;width:24px;height:24px;border-radius:var(--vk-r-sm);display:inline-flex;align-items:center;justify-content:center;padding:0;color:var(--dsw-alias-label-secondary)}",
 				".vk_cmdIconBtn:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}",
 				".vk_cmdIconBtn:disabled{opacity:.4;cursor:default}",
 				".vk_cmdIconBtn:disabled:hover{background:none;color:var(--dsw-alias-label-secondary)}",
@@ -1090,10 +1112,10 @@ window.__ModuleLoader__.load({
 				".vk_termPanel{display:flex;flex-direction:column;min-height:0;height:100%;box-sizing:border-box;background:var(--dsw-alias-bg-base)}",
 				".vk_termHost{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}",
 				".vk_termHost>[data-sidebar-terminal]{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%;width:100%}",
-				".vk_termHost>[data-sidebar-terminal]>div[role=status]{flex:none;padding:4px 10px;font-size:12px;color:var(--dsw-alias-label-secondary);display:flex;align-items:center;gap:8px}",
+				".vk_termHost>[data-sidebar-terminal]>div[role=status]{flex:none;padding:4px 10px;font-size:var(--vk-fs-sm);color:var(--dsw-alias-label-secondary);display:flex;align-items:center;gap:8px}",
 				".vk_termHost>[data-sidebar-terminal]>div:not([role=status]){flex:1 1 auto;min-height:0;width:100%;overflow:hidden}",
 				".vk_termHost .xterm{height:100%}",
-				".vk_termNote{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary);font-size:12px;padding:12px;text-align:center}",
+				".vk_termNote{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary);font-size:var(--vk-fs-sm);padding:12px;text-align:center}",
 			].join("");
 
 			(function injectCmdCss() {
@@ -1827,7 +1849,7 @@ window.__ModuleLoader__.load({
 				};
 				btn.addEventListener("click", (event) => {
 					try { event.stopPropagation(); } catch { /* ignore */ }
-					vkCmdStore.setOpen(vkCmdStore.open !== true);
+					try { const sr = ctxRef.current === null || ctxRef.current === void 0 ? void 0 : ctxRef.current.get("sidebarRight"); if (sr !== null && sr !== void 0 && typeof sr.openTab === "function") sr.openTab("terminal", { preferNewPane: true }); } catch {}
 				});
 				const pump = () => {
 					sync();
@@ -1864,7 +1886,7 @@ window.__ModuleLoader__.load({
 				try {
 					const sr = ctxRef.current === null ? void 0 : ctxRef.current.get("sidebarRight");
 					if (sr !== undefined && sr !== null && typeof sr.openTab === "function") {
-						sr.openTab(PICK_TAB_KIND, {});
+						sr.openTab(PICK_TAB_KIND, vkPlacement(sr, true));
 						return true;
 					}
 				} catch { /* 没有官方右栏服务时静默 */ }
@@ -2307,7 +2329,7 @@ window.__ModuleLoader__.load({
 							const sr = ctx.get("sidebarRight");
 							if (sr !== null && sr !== void 0 && typeof sr.isExpanded === "function" && sr.isExpanded() !== true && typeof sr.toggleExpanded === "function") sr.toggleExpanded();
 						} catch { /* ignore */ }
-						vkCmdStore.setOpen(true);
+						try { const srDown = ctx.get("sidebarRight"); if (srDown !== null && srDown !== void 0 && typeof srDown.openTab === "function") srDown.openTab("terminal", { preferNewPane: true }); } catch {}
 						return true;
 					} catch { return false; }
 				};
@@ -2351,7 +2373,7 @@ window.__ModuleLoader__.load({
 						};
 						render();
 						const off = vkCmdStore.subscribe(render);
-						unmountMount = vkCmdMount(host);
+						unmountMount = () => {};
 						unmountButton = vkCmdInstallButton();
 						unmountWheel = vkCmdInstallWheelProbe();
 						return () => {
@@ -2438,6 +2460,9 @@ window.__ModuleLoader__.load({
 			/**
 			 * 唤起右栏浏览器面板：① 面板已挂着 → 直接导航；② 请右栏开那一格（注册表可能还没就绪，
 			 * 隔 300ms 重试若干次）；③ 面板异步挂载，再等若干帧拿把手；④ 都不通才退官方「浏览器」页。
+			 * ②之前先把这次要去的地址写进「待办槽」：面板一挂上就取走它，直接落在这条地址上，
+			 * 不再先落一次自己的首页、再靠下面的轮询补导航（2026-10-01 实测：那一段就是
+			 * 「点了网址却停在首页」的来源）。
 			 */
 			function tryEmbed(ctx, url, launchLeft) {
 				const hook = paneOpener();
@@ -2445,12 +2470,14 @@ window.__ModuleLoader__.load({
 					try { hook(url); return true; } catch { /* 落到下面的开栏 */ }
 				}
 				const right = sidebarRightOf(ctx);
-				if (openTabSafely(right, EMBED_KIND) === false) {
+				try { globalThis.__DSH_EMBED_PENDING__ = url; } catch { /* 没有 globalThis 就只靠下面的轮询 */ }
+				if (openTabSafely(right, EMBED_KIND, vkPlacement(right, true)) === false) {
 					if (launchLeft > 0) {
 						setTimeout(() => { tryEmbed(ctx, url, launchLeft - 1); }, 300);
 						return false;
 					}
-					openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url: url } });
+					dropPending();
+					openTabSafely(right, OFFICIAL_BROWSER_KIND, Object.assign({ params: { url: url } }, vkPlacement(right, true)));
 					return false;
 				}
 				let left = EMBED_WAIT_FRAMES;
@@ -2462,10 +2489,17 @@ window.__ModuleLoader__.load({
 					}
 					left -= 1;
 					if (left > 0) { setTimeout(tick, 150); return; }
-					openTabSafely(right, OFFICIAL_BROWSER_KIND, { params: { url: url } });
+					dropPending();
+					openTabSafely(right, OFFICIAL_BROWSER_KIND, Object.assign({ params: { url: url } }, vkPlacement(right, true)));
 				};
 				setTimeout(tick, 150);
 				return true;
+			}
+			/** 我们的面板没接住这次请求（退到官方浏览器页）：把待办撤掉，别让它留给下一只面板。 */
+			function dropPending() {
+				try {
+					if (typeof globalThis.__DSH_EMBED_PENDING__ === "string") delete globalThis.__DSH_EMBED_PENDING__;
+				} catch { globalThis.__DSH_EMBED_PENDING__ = void 0; }
 			}
 			function openInPane(ctx, url) {
 				ensureRightBar(ctx);
@@ -2520,7 +2554,8 @@ window.__ModuleLoader__.load({
 					globalThis.__DSH_OPEN_EXTERNAL__ = published;
 					publishedPane = (kind) => {
 						ensureRightBar(ctx);
-						return openTabSafely(sidebarRightOf(ctx), kind, {});
+						const right = sidebarRightOf(ctx);
+						return openTabSafely(right, kind, vkPlacement(right, true));
 					};
 					globalThis.__DSH_OPEN_PANE__ = publishedPane;
 				} catch { /* ignore */ }
@@ -2542,7 +2577,7 @@ window.__ModuleLoader__.load({
 				{ id: "vk.pane.browser", code: "Digit1", kind: "dsh-embedded-browser", label: "打开浏览器（右栏）" },
 				{ id: "vk.pane.files", code: "Digit2", kind: "files", label: "打开本机文件（右栏）" },
 				{ id: "vk.pane.viewer", code: "Digit3", kind: "anoslide.view", label: "打开查看器（右栏）" },
-				{ id: "vk.cmdline.toggle", code: "Digit4", kind: null, label: "命令行（下段）" }
+				{ id: "vk.cmdline.toggle", code: "Digit4", kind: "terminal", label: "命令行（下段）" }
 			];
 			const defaultsOf = (code) => {
 				const one = { code: code, modifiers: ["control", "alt"] };

@@ -1,0 +1,54 @@
+{
+    "name": "dsh-motion",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "lib/index.js",
+    "exports": {
+        ".": {
+            "default": "./lib/index.js"
+        },
+        "./client": {
+            "default": "./lib/client.js"
+        },
+        "./package.json": {
+            "default": "./package.json"
+        }
+    },
+    "files": [
+        "lib",
+        "cordis.patch.yml",
+        "package.json"
+    ],
+    "dsh": {
+        "bundle": {
+            "patch": "./cordis.patch.yml"
+        },
+        "client": {
+            "inject": [],
+            "platform": "web"
+        }
+    },
+    "peerDependencies": {
+        "@deepseek-ai/cordis": "*"
+    },
+    "description": "过渡动画（DSH 插件）：三栏骨架轨道常驻过渡 + 设置页入场退场。纯 CSS 注入加两个极小的事件拦截，不改任何官方包。",
+    "keywords": [
+        "dsh",
+        "deepseek-harness",
+        "motion",
+        "transition",
+        "ui"
+    ],
+    "license": "MIT",
+    "author": "Ln1m (https://github.com/Ln1m)",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Ln1m/dsh-vk-suite.git",
+        "directory": "dsh-motion"
+    },
+    "homepage": "https://github.com/Ln1m/dsh-vk-suite/tree/main/dsh-motion#readme",
+    "bugs": {
+        "url": "https://github.com/Ln1m/dsh-vk-suite/issues"
+    }
+}
